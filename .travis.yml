@@ -3,5 +3,7 @@ mono: none
 dotnet: 2.0.0
 dist: trusty
 script:
+ - chmod +x build.sh
+ - chmod +x test.sh
  - ./build.sh
  - ./test.sh
