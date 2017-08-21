@@ -6,10 +6,6 @@ namespace Svn2GitNet
 {
     public class Options
     {
-        private string _trunk;
-        private IEnumerable<string> _tags;
-        private IEnumerable<string> _branches;
-
         /// <summary>
         /// Be verbose in logging -- useful for debugging issues
         /// </summary>
@@ -57,86 +53,44 @@ namespace Svn2GitNet
         [Option("trunk", Default = "trunk", HelpText = "Subpath to trunk from repository URL (default: trunk)")]
         public string SubpathToTrunk
         {
-            get
-            {
-                return _trunk;
-            }
-
-            set
-            {
-                _trunk = value;
-            }
+            get;
+            set;
         }
 
         [Option("notrunk", HelpText = "Do not import anything from trunk")]
-        public string NoTrunk
+        public bool NoTrunk
         {
-            get
-            {
-                return _trunk;
-            }
-
-            set
-            {
-                _trunk = string.Empty;
-            }
+            get;
+            set;
         }
 
         [Option("branches", HelpText = "Subpath to branches from repository URL (default: branches); can be used multiple times")]
         public IEnumerable<string> Branches
         {
-            get
-            {
-                return _branches;
-            }
-
-            set
-            {
-                _branches = value;
-            }
+            get;
+            set;
         }
 
         [Option("nobranches", HelpText = "Do not try to import any branches")]
-        public IEnumerable<string> NoBranches
+        public bool NoBranches
         {
-            get
-            {
-                return _branches;
-            }
-
-            set
-            {
-                _branches = null;
-            }
+            get;
+            set;
         }
 
         [Option("tags", HelpText = "Subpath to tags from repository URL (default: tags); can be used multiple times")]
         public IEnumerable<string> Tags
         {
-            get
-            {
-                return _tags;
-            }
-
-            set
-            {
-                _tags = value;
-            }
+            get;
+            set;
         }
 
 
         [Option("notags", HelpText = "Do not try to import any tags")]
-        public IEnumerable<string> NoTags
+        public bool NoTags
         {
-            get
-            {
-                return _tags;
-            }
-
-            set
-            {
-                _tags = null;
-            }
+            get;
+            set;
         }
 
         [Option("exclude", HelpText = "Specify a Perl regular expression to filter paths when fetching; can be used multiple times")]

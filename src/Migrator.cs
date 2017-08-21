@@ -1,7 +1,10 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Svn2GitNet
 {
@@ -13,61 +16,176 @@ namespace Svn2GitNet
         private Options _options;
         private string[] _args;
 
-        private string _gitConfigCommand;
+        private string _gitConfigCommandArguments;
+
+        private string _url;
 
         public Migrator(Options options, string[] args)
         {
             _options = options;
             _args = args;
+        }
+
+        public MigrateResult Initialize()
+        {
             if (string.IsNullOrWhiteSpace(_options.Authors))
             {
                 _options.Authors = GetDefaultAuthorsOption();
             }
-        }
 
-        public OptionsValidateResult ValidateOptions()
-        {
             if (_options.Rebase || _options.RebaseBranch)
             {
                 if (_args.Length > 1)
                 {
-                    return OptionsValidateResult.TooManyArguments;
+                    return MigrateResult.TooManyArguments;
                 }
 
                 return VerifyWorkingTreeIsClean();
             }
             else if (_args.Length == 0)
             {
-                return OptionsValidateResult.MissingSvnUrlParameter;
+                return MigrateResult.MissingSvnUrlParameter;
             }
             else if (_args.Length > 1)
             {
-                return OptionsValidateResult.TooManyArguments;
+                return MigrateResult.TooManyArguments;
             }
 
-            return OptionsValidateResult.OK;
+            _url = _args[0].Replace(" ", "\\ ");
+
+            return MigrateResult.OK;
         }
 
         public void Run()
         {
+            if (_options.Rebase)
+            {
+                GetBranches();
+            }
+            else if (_options.RebaseBranch)
+            {
+                GetRebaseBranch();
+            }
+            else
+            {
+                Clone();
+            }
 
+            FixBranches();
+            FixTags();
+            FixTrunk();
+            OptimizeRepos();
         }
 
+        private MigrateResult Clone()
+        {
+            StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
+            if (!string.IsNullOrWhiteSpace(_options.UserName))
+            {
+                arguments.AppendFormat("--username='{0}'", _options.UserName);
+            }
 
-        private string GitConfigCommand
+            if (!string.IsNullOrWhiteSpace(_options.Password))
+            {
+                arguments.AppendFormat("--password='{0}'", _options.Password);
+            }
+
+            if (!_options.IncludeMetaData)
+            {
+                arguments.Append("--no-metadata ");
+            }
+
+            if (_options.NoMinimizeUrl)
+            {
+                arguments.Append("--no-minimize-url ");
+            }
+
+            var branches = new List<string>(_options.Branches);
+            var tags = new List<string>(_options.Tags);
+
+            if (_options.RootIsTrunk)
+            {
+                // Non-standard repository layout.
+                // The repository root is effectively trunk.
+                arguments.AppendFormat("--trunk='{0}'", _url);
+                RunCommand("git", arguments.ToString());
+            }
+            else
+            {
+                // Add each component to the command that was passed as an argument.
+                if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
+                {
+                    arguments.AppendFormat("--trunk='{0}'", _options.SubpathToTrunk);
+                }
+
+                if (!_options.NoTags)
+                {
+                    if (tags.Count == 0)
+                    {
+                        // Fill default tags here so that they can be filtered later
+                        tags.Add("tags");
+                    }
+
+                    // Process default or user-supplied tags
+                    foreach (var t in tags)
+                    {
+                        arguments.AppendFormat("--tags='{0}' ", t);
+                    }
+                }
+
+                if (!_options.NoBranches)
+                {
+                    if (branches.Count == 0)
+                    {
+                        // Fill default branches here so that they can be filtered later
+                        branches.Add("branches");
+                    }
+
+                    // Process default or user-supplied branches
+                    foreach (var b in branches)
+                    {
+                        arguments.AppendFormat("--branches='{0}' ", b);
+                    }
+                }
+
+                arguments.Append(_url);
+
+                if (RunCommand("git", arguments.ToString()) != 0)
+                {
+                    return MigrateResult.FailToInitSvn;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(_options.Authors))
+            {
+                RunCommand("git", 
+                            string.Format("{0} svn.authorsfile {1}", 
+                            _gitConfigCommandArguments, _options.Authors));
+            }
+
+            arguments = new StringBuilder("svn fetch ");
+            if (!string.IsNullOrWhiteSpace(_options.Revision))
+            {
+                
+            }
+
+            return MigrateResult.OK;
+        }
+
+        private string GitConfigCommandArguments
         {
             get
             {
-                if (_gitConfigCommand == null)
+                if (_gitConfigCommandArguments == null)
                 {
                     string standardOutput;
                     string standardError;
                     RunCommand("git", "config --local --get user.name", out standardOutput, out standardError);
                     string combinedOutput = standardOutput + standardError;
-                    _gitConfigCommand = Regex.IsMatch(combinedOutput, @"/unknown option/m") ? "git config" : "git config --local";
+                    _gitConfigCommandArguments = Regex.IsMatch(combinedOutput, @"/unknown option/m") ? "config" : "config --local";
                 }
 
-                return _gitConfigCommand;
+                return _gitConfigCommandArguments;
             }
         }
 
@@ -109,7 +227,7 @@ namespace Svn2GitNet
             }
         }
 
-        private OptionsValidateResult VerifyWorkingTreeIsClean()
+        private MigrateResult VerifyWorkingTreeIsClean()
         {
             string standardOutput = string.Empty;
             string standardError = string.Empty;
@@ -117,15 +235,15 @@ namespace Svn2GitNet
             int exitCode = RunCommand("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
             if (exitCode != 0)
             {
-                return OptionsValidateResult.CommandExecutionFail;
+                return MigrateResult.FailToExecuteCommand;
             }
 
             if (!string.IsNullOrWhiteSpace(standardOutput) || !string.IsNullOrWhiteSpace(standardError))
             {
-                return OptionsValidateResult.WorkingTreeIsNotClean;
+                return MigrateResult.WorkingTreeIsNotClean;
             }
 
-            return OptionsValidateResult.OK;
+            return MigrateResult.OK;
         }
 
         private string GetDefaultAuthorsOption()

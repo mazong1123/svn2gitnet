@@ -5,21 +5,21 @@ namespace Svn2GitNet
 {
     class Program
     {
-        static void ShowValidateErrorMessage(OptionsValidateResult validateResult)
+        static void ShowMigrateErrorMessage(MigrateResult migrateResult)
         {
-            switch (validateResult)
+            switch (migrateResult)
             {
-                case OptionsValidateResult.MissingSvnUrlParameter:
+                case MigrateResult.MissingSvnUrlParameter:
                     Console.WriteLine("Missing SVN_URL parameter.");
                     break;
-                case OptionsValidateResult.TooManyArguments:
+                case MigrateResult.TooManyArguments:
                     Console.WriteLine("Too many arguments.");
                     break;
-                case OptionsValidateResult.WorkingTreeIsNotClean:
+                case MigrateResult.WorkingTreeIsNotClean:
                     Console.WriteLine("You have local pending changes.  The working tree must be clean in order to continue.");
                     break;
-                case OptionsValidateResult.CommandExecutionFail:
-                    Console.WriteLine("Command execution fail.");
+                case MigrateResult.FailToExecuteCommand:
+                    Console.WriteLine("Fail to execute command. Run with -v or --verbose for details.");
                     break;
                 default:
                     break;
@@ -29,10 +29,10 @@ namespace Svn2GitNet
         static void Migrate(Options options, string[] args)
         {
             Migrator migrator = new Migrator(options, args);
-            OptionsValidateResult validateResult = migrator.ValidateOptions();
-            if (validateResult != OptionsValidateResult.OK)
+            MigrateResult migrateResult = migrator.Initialize();
+            if (migrateResult != MigrateResult.OK)
             {
-                ShowValidateErrorMessage(validateResult);
+                ShowMigrateErrorMessage(migrateResult);
                 return;
             }
 
