@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Svn2GitNet
 {
-    class Migrator
+    public class Migrator
     {
         // TODO: Add windows support.
         private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
@@ -56,8 +56,9 @@ namespace Svn2GitNet
             return MigrateResult.OK;
         }
 
-        public void Run()
+        public MigrateResult Run()
         {
+            MigrateResult result = MigrateResult.OK;
             if (_options.Rebase)
             {
                 GetBranches();
@@ -68,13 +69,20 @@ namespace Svn2GitNet
             }
             else
             {
-                Clone();
+                result = Clone();
+            }
+
+            if (result != MigrateResult.OK)
+            {
+                return result;
             }
 
             FixBranches();
             FixTags();
             FixTrunk();
             OptimizeRepos();
+
+            return result;
         }
 
         private MigrateResult Clone()
@@ -152,22 +160,65 @@ namespace Svn2GitNet
 
                 if (RunCommand("git", arguments.ToString()) != 0)
                 {
-                    return MigrateResult.FailToInitSvn;
+                    return MigrateResult.FailToExecuteSvnInitCommand;
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Authors))
             {
-                RunCommand("git", 
-                            string.Format("{0} svn.authorsfile {1}", 
+                RunCommand("git",
+                            string.Format("{0} svn.authorsfile {1}",
                             _gitConfigCommandArguments, _options.Authors));
             }
 
             arguments = new StringBuilder("svn fetch ");
             if (!string.IsNullOrWhiteSpace(_options.Revision))
             {
-                
+                var range = _options.Revision.Split(":");
+                string start = range[0];
+                string end = range.Length < 2 || string.IsNullOrWhiteSpace(range[1]) ? "HEAD" : range[1];
+                arguments.AppendFormat("-r {0}:{1}", start, end);
             }
+
+            if (_options.Exclude != null && _options.Exclude.Any())
+            {
+                // Add exclude paths to the command line. Some versions of git support
+                // this for fetch only, later also for init.
+                List<string> regex = new List<string>();
+                if (!_options.RootIsTrunk)
+                {
+                    if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
+                    {
+                        regex.Add(_options.SubpathToTrunk + "[/]");
+                    }
+
+                    if (!_options.NoTags && tags.Count > 0)
+                    {
+                        foreach(var t in tags)
+                        {
+                            regex.Add(t + "[/][^/]+[/]");
+                        }
+                    }
+
+                    if (!_options.NoBranches && branches.Count > 0)
+                    {
+                        foreach(var b in branches)
+                        {
+                            regex.Add(b + "[/][^/]+[/]");
+                        }
+                    }
+                }
+
+                string regexStr = "^(?:" + string.Join("|", regex) + ")(?:" + string.Join("|", _options.Exclude) + ")";
+                arguments.AppendFormat("--ignore-paths='{0}' ", regexStr);
+            }
+
+            if (RunCommand("git", arguments.ToString()) != 0)
+            {
+                return MigrateResult.FailToExecuteSvnFetchCommand;
+            }
+
+            GetBranches();
 
             return MigrateResult.OK;
         }

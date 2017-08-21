@@ -9,6 +9,7 @@ namespace Svn2GitNet
         MissingSvnUrlParameter,
         WorkingTreeIsNotClean,
         FailToExecuteCommand,
-        FailToInitSvn
+        FailToExecuteSvnInitCommand,
+        FailToExecuteSvnFetchCommand
     }
 }
