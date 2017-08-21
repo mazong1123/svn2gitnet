@@ -5,33 +5,44 @@ namespace Svn2GitNet
 {
     class Program
     {
-        static void ShowHelperMessage(OptionValidateResult opt)
+        static void ShowValidateErrorMessage(OptionsValidateResult validateResult)
         {
-            switch (opt)
+            switch (validateResult)
             {
-                case OptionValidateResult.MissingSvnUrlParameter:
+                case OptionsValidateResult.MissingSvnUrlParameter:
                     Console.WriteLine("Missing SVN_URL parameter.");
                     break;
-                case OptionValidateResult.TooManyArguments:
+                case OptionsValidateResult.TooManyArguments:
                     Console.WriteLine("Too many arguments.");
+                    break;
+                case OptionsValidateResult.WorkingTreeIsNotClean:
+                    Console.WriteLine("You have local pending changes.  The working tree must be clean in order to continue.");
+                    break;
+                case OptionsValidateResult.CommandExecutionFail:
+                    Console.WriteLine("Command execution fail.");
                     break;
                 default:
                     break;
             }
         }
 
+        static void Migrate(Options options, string[] args)
+        {
+            Migrator migrator = new Migrator(options, args);
+            OptionsValidateResult validateResult = migrator.ValidateOptions();
+            if (validateResult != OptionsValidateResult.OK)
+            {
+                ShowValidateErrorMessage(validateResult);
+                return;
+            }
+
+            migrator.Run();
+        }
+
         static void Main(string[] args)
         {
-            var result = Parser.Default.ParseArguments<Options>(args);
-
-            /*OptionParser parser = new OptionParser(args);
-            Options opt = parser.Parse();
-            OptionValidateResult validateResult = parser.Validate(opt);
-            if (validateResult != OptionValidateResult.OK)
-            {
-                ShowHelperMessage(validateResult);
-                return;
-            }*/
+            Parser.Default.ParseArguments<Options>(args)
+            .WithParsed(options => Migrate(options, args));
         }
     }
 }
