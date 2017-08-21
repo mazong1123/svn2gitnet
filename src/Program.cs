@@ -1,4 +1,5 @@
 ﻿using System;
+using CommandLine;
 
 namespace Svn2GitNet
 {
@@ -21,14 +22,16 @@ namespace Svn2GitNet
 
         static void Main(string[] args)
         {
-            OptionParser parser = new OptionParser(args);
-            Option opt = parser.Parse();
+            var result = Parser.Default.ParseArguments<Options>(args);
+
+            /*OptionParser parser = new OptionParser(args);
+            Options opt = parser.Parse();
             OptionValidateResult validateResult = parser.Validate(opt);
             if (validateResult != OptionValidateResult.OK)
             {
                 ShowHelperMessage(validateResult);
                 return;
-            }
+            }*/
         }
     }
 }
