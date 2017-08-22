@@ -15,10 +15,11 @@ namespace Svn2GitNet
         private readonly string _dir;
         private Options _options;
         private string[] _args;
-
         private string _gitConfigCommandArguments;
-
         private string _url;
+        private IEnumerable<string> _localBranches;
+        private IEnumerable<string> _remoteBranches;
+        private IEnumerable<string> _tags;
 
         public Migrator(Options options, string[] args)
         {
@@ -194,7 +195,7 @@ namespace Svn2GitNet
 
                     if (!_options.NoTags && tags.Count > 0)
                     {
-                        foreach(var t in tags)
+                        foreach (var t in tags)
                         {
                             regex.Add(t + "[/][^/]+[/]");
                         }
@@ -202,7 +203,7 @@ namespace Svn2GitNet
 
                     if (!_options.NoBranches && branches.Count > 0)
                     {
-                        foreach(var b in branches)
+                        foreach (var b in branches)
                         {
                             regex.Add(b + "[/][^/]+[/]");
                         }
@@ -242,7 +243,22 @@ namespace Svn2GitNet
 
         private void GetBranches()
         {
+            // Get the list of local and remote branches, taking care to ignore console color codes and ignoring the
+            // '*' character used to indicate the currently selected branch.
+            string standardOutput = string.Empty;
+            string standardError = string.Empty;
+            RunCommand("git", "branch -l --no-color", out standardOutput, out standardError);
+            _localBranches = standardOutput
+                        .Split("\n", StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Replace("*", "").Trim());
 
+            RunCommand("git", "branch -r --no-color", out standardOutput, out standardError);
+            _remoteBranches = standardOutput
+                        .Split("\n", StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Replace("*", "").Trim());
+
+            // Tags are remote branches that start with "tags/".
+            _tags = _remoteBranches.ToList().FindAll(x => Regex.IsMatch(x.Trim(), @"%r{^svn\/tags\/"));
         }
 
         private void GetRebaseBranch()
