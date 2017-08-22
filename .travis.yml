@@ -1,0 +1,11 @@
+os:
+  - linux
+
+language: csharp
+mono: none
+dotnet: 2.0.0
+script:
+ - chmod +x build.sh
+ - chmod +x test.sh
+ - ./build.sh
+ - ./test.sh
