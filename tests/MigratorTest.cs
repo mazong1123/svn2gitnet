@@ -17,13 +17,15 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { };
             Migrator migrator = new Migrator(new Options(), args);
-            MigrateResult expected = MigrateResult.MissingSvnUrlParameter;
+
+            //MigrateResult expected = MigrateResult.MissingSvnUrlParameter;
 
             // Act
-            MigrateResult actual = migrator.Initialize();
+            Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.IsType<MigrateException>(ex);
+            Assert.Equal(ExceptionHelper.ExceptionMessage.MISSING_SVN_URL_PARAMETER, ex.Message);
         }
 
         [Fact]
@@ -32,13 +34,13 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { "--rebase", "extraarg" };
             Migrator migrator = new Migrator(new Options(), args);
-            MigrateResult expected = MigrateResult.TooManyArguments;
-
+            
             // Act
-            MigrateResult actual = migrator.Initialize();
+            Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.IsType<MigrateException>(ex);
+            Assert.Equal(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS, ex.Message);
         }
 
         [Fact]
@@ -47,13 +49,13 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { "--rebasebranch", "extraarg" };
             Migrator migrator = new Migrator(new Options(), args);
-            MigrateResult expected = MigrateResult.TooManyArguments;
-
+            
             // Act
-            MigrateResult actual = migrator.Initialize();
+            Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.IsType<MigrateException>(ex);
+            Assert.Equal(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS, ex.Message);
         }
 
         [Fact]
@@ -62,13 +64,13 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { "http://testsvnurl", "extraarg" };
             Migrator migrator = new Migrator(new Options(), args);
-            MigrateResult expected = MigrateResult.TooManyArguments;
-
+            
             // Act
-            MigrateResult actual = migrator.Initialize();
+            Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.IsType<MigrateException>(ex);
+            Assert.Equal(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS, ex.Message);
         }
 
         [Fact]
@@ -77,13 +79,12 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { "http://testsvnurl" };
             Migrator migrator = new Migrator(new Options(), args);
-            MigrateResult expected = MigrateResult.OK;
-
+            
             // Act
-            MigrateResult actual = migrator.Initialize();
+            Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.Equal(expected, actual);
+            Assert.Null(ex);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Svn2GitNet
             _args = args;
         }
 
-        public MigrateResult Initialize()
+        public void Initialize()
         {
             if (string.IsNullOrWhiteSpace(_options.Authors))
             {
@@ -38,28 +38,25 @@ namespace Svn2GitNet
             {
                 if (_args.Length > 1)
                 {
-                    return MigrateResult.TooManyArguments;
+                    throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
                 }
 
-                return VerifyWorkingTreeIsClean();
+                VerifyWorkingTreeIsClean();
             }
             else if (_args.Length == 0)
             {
-                return MigrateResult.MissingSvnUrlParameter;
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.MISSING_SVN_URL_PARAMETER);
             }
             else if (_args.Length > 1)
             {
-                return MigrateResult.TooManyArguments;
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
             }
 
             _url = _args[0].Replace(" ", "\\ ");
-
-            return MigrateResult.OK;
         }
 
-        public MigrateResult Run()
+        public void Run()
         {
-            MigrateResult result = MigrateResult.OK;
             if (_options.Rebase)
             {
                 GetBranches();
@@ -70,23 +67,16 @@ namespace Svn2GitNet
             }
             else
             {
-                result = Clone();
-            }
-
-            if (result != MigrateResult.OK)
-            {
-                return result;
+                Clone();
             }
 
             FixBranches();
             FixTags();
             FixTrunk();
             OptimizeRepos();
-
-            return result;
         }
 
-        private MigrateResult Clone()
+        private void Clone()
         {
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
@@ -161,7 +151,7 @@ namespace Svn2GitNet
 
                 if (RunCommand("git", arguments.ToString()) != 0)
                 {
-                    return MigrateResult.FailToExecuteSvnInitCommand;
+                    throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
                 }
             }
 
@@ -216,12 +206,10 @@ namespace Svn2GitNet
 
             if (RunCommand("git", arguments.ToString()) != 0)
             {
-                return MigrateResult.FailToExecuteSvnFetchCommand;
+                throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
             }
 
             GetBranches();
-
-            return MigrateResult.OK;
         }
 
         private string GitConfigCommandArguments
@@ -270,23 +258,23 @@ namespace Svn2GitNet
 
             if (_localBranches.Count() > 1)
             {
-                throw new Exception("Too many matching local branches found.");
+                throw new MigrateException("Too many matching local branches found.");
             }
 
             if (!_localBranches.Any())
             {
-                throw new Exception($"No local branch named '{_options.RebaseBranch}' found.");
+                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_LOCAL_BRANCH_FOUND, _options.RebaseBranch));
             }
 
             if (_remoteBranches.Count() > 2)
             {
                 // 1 if remote is not pushed, 2 if its pushed to remote.
-                throw new Exception("Too many matching remote branches found.");
+                throw new MigrateException("Too many matching remote branches found.");
             }
 
             if (!_remoteBranches.Any())
             {
-                throw new Exception($"No remote branch named '{_options.RebaseBranch}' found.");
+                throw new MigrateException($"No remote branch named '{_options.RebaseBranch}' found.");
             }
 
             // TODO: write message to output.
@@ -323,7 +311,7 @@ namespace Svn2GitNet
             }
         }
 
-        private MigrateResult VerifyWorkingTreeIsClean()
+        private void VerifyWorkingTreeIsClean()
         {
             string standardOutput = string.Empty;
             string standardError = string.Empty;
@@ -331,15 +319,13 @@ namespace Svn2GitNet
             int exitCode = RunCommand("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
             if (exitCode != 0)
             {
-                return MigrateResult.FailToExecuteCommand;
+                throw new MigrateException($"Fail to execute command 'git status --porcelain --untracked-files=no'. Run with -v or --verbose for details.");
             }
 
             if (!string.IsNullOrWhiteSpace(standardOutput) || !string.IsNullOrWhiteSpace(standardError))
             {
-                return MigrateResult.WorkingTreeIsNotClean;
+                throw new MigrateException("You have local pending changes. The working tree must be clean in order to continue.");
             }
-
-            return MigrateResult.OK;
         }
 
         private string GetDefaultAuthorsOption()
