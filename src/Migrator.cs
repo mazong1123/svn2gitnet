@@ -34,7 +34,7 @@ namespace Svn2GitNet
                 _options.Authors = GetDefaultAuthorsOption();
             }
 
-            if (_options.Rebase || _options.RebaseBranch)
+            if (_options.Rebase || !string.IsNullOrWhiteSpace(_options.RebaseBranch))
             {
                 if (_args.Length > 1)
                 {
@@ -64,7 +64,7 @@ namespace Svn2GitNet
             {
                 GetBranches();
             }
-            else if (_options.RebaseBranch)
+            else if (!string.IsNullOrWhiteSpace(_options.RebaseBranch))
             {
                 GetRebaseBranch();
             }
@@ -258,12 +258,41 @@ namespace Svn2GitNet
                         .Select(x => x.Replace("*", "").Trim());
 
             // Tags are remote branches that start with "tags/".
-            _tags = _remoteBranches.ToList().FindAll(x => Regex.IsMatch(x.Trim(), @"%r{^svn\/tags\/"));
+            _tags = _remoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"%r{^svn\/tags\/"));
         }
 
         private void GetRebaseBranch()
         {
+            GetBranches();
 
+            _localBranches = _localBranches.ToList().FindAll(l => l == _options.RebaseBranch);
+            _remoteBranches = _remoteBranches.ToList().FindAll(r => r == _options.RebaseBranch);
+
+            if (_localBranches.Count() > 1)
+            {
+                throw new Exception("Too many matching local branches found.");
+            }
+
+            if (!_localBranches.Any())
+            {
+                throw new Exception($"No local branch named '{_options.RebaseBranch}' found.");
+            }
+
+            if (_remoteBranches.Count() > 2)
+            {
+                // 1 if remote is not pushed, 2 if its pushed to remote.
+                throw new Exception("Too many matching remote branches found.");
+            }
+
+            if (!_remoteBranches.Any())
+            {
+                throw new Exception($"No remote branch named '{_options.RebaseBranch}' found.");
+            }
+
+            // TODO: write message to output.
+            
+            // We only rebase the specified branch
+            _tags = null;
         }
 
         private void FixTags()
