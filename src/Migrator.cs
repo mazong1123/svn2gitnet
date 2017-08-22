@@ -293,7 +293,11 @@ namespace Svn2GitNet
                 throw new MigrateException($"No remote branch named '{_options.RebaseBranch}' found.");
             }
 
-            // TODO: write message to output.
+            string foundLocalBranch = _localBranches.First();
+            _messageDisplayer.Show($"Local branches '{foundLocalBranch}' found");
+
+            string foundRemoteBranches = string.Join(" ", _remoteBranches);
+            _messageDisplayer.Show($"Remote branches '{foundRemoteBranches}' found");
 
             // We only rebase the specified branch
             _tags = null;
@@ -301,7 +305,22 @@ namespace Svn2GitNet
 
         private void FixTags()
         {
+            string currentUserName;
+            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
 
+            string currentUserEmail;
+            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+
+            if (_tags != null)
+            {
+                foreach(string t in _tags)
+                {
+                    string tag = t.Trim();
+                    string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
+
+                    // TODO:
+                }
+            }
         }
 
         private void FixBranches()

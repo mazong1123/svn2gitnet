@@ -13,6 +13,13 @@ namespace Svn2GitNet
             return Run(cmd, arguments, out standardOutput, out standardError);
         }
 
+        public int Run(string cmd, string arguments, out string standardOutput)
+        {
+            string standardError;
+            
+            return Run(cmd, arguments, out standardOutput, out standardError);
+        }
+
         public int Run(string cmd, string arguments, out string standardOutput, out string standardError)
         {
             Process commandProcess = new Process
