@@ -13,6 +13,10 @@ namespace Svn2GitNet
         // TODO: Add windows support.
         private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
         private readonly string _dir;
+
+        private ICommandRunner _commandRunner;
+        private IMessageDisplayer _messageDisplayer;
+
         private Options _options;
         private string[] _args;
         private string _gitConfigCommandArguments;
@@ -22,9 +26,21 @@ namespace Svn2GitNet
         private IEnumerable<string> _tags;
 
         public Migrator(Options options, string[] args)
+        : this(options, args, new CommandRunner())
+        {
+        }
+
+        public Migrator(Options options, string[] args, ICommandRunner commandRunner)
+        : this(options, args, commandRunner, new ConsoleMessageDisplayer())
+        {
+        }
+
+        public Migrator(Options options, string[] args, ICommandRunner commandRunner, IMessageDisplayer messageDisplayer)
         {
             _options = options;
             _args = args;
+            _commandRunner = commandRunner;
+            _messageDisplayer = messageDisplayer;
         }
 
         public void Initialize()
@@ -107,7 +123,7 @@ namespace Svn2GitNet
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
                 arguments.AppendFormat("--trunk='{0}'", _url);
-                RunCommand("git", arguments.ToString());
+                _commandRunner.Run("git", arguments.ToString());
             }
             else
             {
@@ -149,7 +165,7 @@ namespace Svn2GitNet
 
                 arguments.Append(_url);
 
-                if (RunCommand("git", arguments.ToString()) != 0)
+                if (_commandRunner.Run("git", arguments.ToString()) != 0)
                 {
                     throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
                 }
@@ -157,7 +173,7 @@ namespace Svn2GitNet
 
             if (!string.IsNullOrWhiteSpace(_options.Authors))
             {
-                RunCommand("git",
+                _commandRunner.Run("git",
                             string.Format("{0} svn.authorsfile {1}",
                             _gitConfigCommandArguments, _options.Authors));
             }
@@ -204,7 +220,7 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--ignore-paths='{0}' ", regexStr);
             }
 
-            if (RunCommand("git", arguments.ToString()) != 0)
+            if (_commandRunner.Run("git", arguments.ToString()) != 0)
             {
                 throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
             }
@@ -220,7 +236,7 @@ namespace Svn2GitNet
                 {
                     string standardOutput;
                     string standardError;
-                    RunCommand("git", "config --local --get user.name", out standardOutput, out standardError);
+                    _commandRunner.Run("git", "config --local --get user.name", out standardOutput, out standardError);
                     string combinedOutput = standardOutput + standardError;
                     _gitConfigCommandArguments = Regex.IsMatch(combinedOutput, @"/unknown option/m") ? "config" : "config --local";
                 }
@@ -235,12 +251,12 @@ namespace Svn2GitNet
             // '*' character used to indicate the currently selected branch.
             string standardOutput = string.Empty;
             string standardError = string.Empty;
-            RunCommand("git", "branch -l --no-color", out standardOutput, out standardError);
+            _commandRunner.Run("git", "branch -l --no-color", out standardOutput, out standardError);
             _localBranches = standardOutput
                         .Split("\n", StringSplitOptions.RemoveEmptyEntries)
                         .Select(x => x.Replace("*", "").Trim());
 
-            RunCommand("git", "branch -r --no-color", out standardOutput, out standardError);
+            _commandRunner.Run("git", "branch -r --no-color", out standardOutput, out standardError);
             _remoteBranches = standardOutput
                         .Split("\n", StringSplitOptions.RemoveEmptyEntries)
                         .Select(x => x.Replace("*", "").Trim());
@@ -278,7 +294,7 @@ namespace Svn2GitNet
             }
 
             // TODO: write message to output.
-            
+
             // We only rebase the specified branch
             _tags = null;
         }
@@ -300,7 +316,7 @@ namespace Svn2GitNet
 
         private void OptimizeRepos()
         {
-            RunCommand("git", "gc");
+            _commandRunner.Run("git", "gc");
         }
 
         private void Log(string message)
@@ -316,7 +332,7 @@ namespace Svn2GitNet
             string standardOutput = string.Empty;
             string standardError = string.Empty;
 
-            int exitCode = RunCommand("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
+            int exitCode = _commandRunner.Run("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
             if (exitCode != 0)
             {
                 throw new MigrateException($"Fail to execute command 'git status --porcelain --untracked-files=no'. Run with -v or --verbose for details.");
@@ -336,37 +352,6 @@ namespace Svn2GitNet
             }
 
             return string.Empty;
-        }
-
-        private int RunCommand(string cmd, string arguments)
-        {
-            string standardOutput;
-            string standardError;
-
-            return RunCommand(cmd, arguments, out standardOutput, out standardError);
-        }
-
-        private int RunCommand(string cmd, string arguments, out string standardOutput, out string standardError)
-        {
-            Process commandProcess = new Process
-            {
-                StartInfo =
-                {
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    FileName = cmd,
-                    Arguments = arguments
-                }
-            };
-
-            commandProcess.Start();
-
-            standardOutput = commandProcess.StandardOutput.ReadToEnd();
-            standardError = commandProcess.StandardError.ReadToEnd();
-
-            return commandProcess.ExitCode;
         }
     }
 }
