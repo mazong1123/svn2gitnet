@@ -13,6 +13,10 @@ namespace Svn2GitNet
         // TODO: Add windows support.
         private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
         private readonly string _dir;
+
+        private ICommandRunner _commandRunner;
+        private IMessageDisplayer _messageDisplayer;
+
         private Options _options;
         private string[] _args;
         private string _gitConfigCommandArguments;
@@ -22,71 +26,73 @@ namespace Svn2GitNet
         private IEnumerable<string> _tags;
 
         public Migrator(Options options, string[] args)
+        : this(options, args, new CommandRunner())
+        {
+        }
+
+        public Migrator(Options options, string[] args, ICommandRunner commandRunner)
+        : this(options, args, commandRunner, new ConsoleMessageDisplayer())
+        {
+        }
+
+        public Migrator(Options options, string[] args, ICommandRunner commandRunner, IMessageDisplayer messageDisplayer)
         {
             _options = options;
             _args = args;
+            _commandRunner = commandRunner;
+            _messageDisplayer = messageDisplayer;
         }
 
-        public MigrateResult Initialize()
+        public void Initialize()
         {
             if (string.IsNullOrWhiteSpace(_options.Authors))
             {
                 _options.Authors = GetDefaultAuthorsOption();
             }
 
-            if (_options.Rebase || _options.RebaseBranch)
+            if (_options.Rebase || !string.IsNullOrWhiteSpace(_options.RebaseBranch))
             {
                 if (_args.Length > 1)
                 {
-                    return MigrateResult.TooManyArguments;
+                    throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
                 }
 
-                return VerifyWorkingTreeIsClean();
+                VerifyWorkingTreeIsClean();
             }
             else if (_args.Length == 0)
             {
-                return MigrateResult.MissingSvnUrlParameter;
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.MISSING_SVN_URL_PARAMETER);
             }
             else if (_args.Length > 1)
             {
-                return MigrateResult.TooManyArguments;
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
             }
 
             _url = _args[0].Replace(" ", "\\ ");
-
-            return MigrateResult.OK;
         }
 
-        public MigrateResult Run()
+        public void Run()
         {
-            MigrateResult result = MigrateResult.OK;
             if (_options.Rebase)
             {
                 GetBranches();
             }
-            else if (_options.RebaseBranch)
+            else if (!string.IsNullOrWhiteSpace(_options.RebaseBranch))
             {
                 GetRebaseBranch();
             }
             else
             {
-                result = Clone();
-            }
-
-            if (result != MigrateResult.OK)
-            {
-                return result;
+                Clone();
             }
 
             FixBranches();
             FixTags();
             FixTrunk();
             OptimizeRepos();
-
-            return result;
         }
 
-        private MigrateResult Clone()
+        private void Clone()
         {
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
@@ -117,7 +123,7 @@ namespace Svn2GitNet
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
                 arguments.AppendFormat("--trunk='{0}'", _url);
-                RunCommand("git", arguments.ToString());
+                _commandRunner.Run("git", arguments.ToString());
             }
             else
             {
@@ -159,15 +165,15 @@ namespace Svn2GitNet
 
                 arguments.Append(_url);
 
-                if (RunCommand("git", arguments.ToString()) != 0)
+                if (_commandRunner.Run("git", arguments.ToString()) != 0)
                 {
-                    return MigrateResult.FailToExecuteSvnInitCommand;
+                    throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
                 }
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Authors))
             {
-                RunCommand("git",
+                _commandRunner.Run("git",
                             string.Format("{0} svn.authorsfile {1}",
                             _gitConfigCommandArguments, _options.Authors));
             }
@@ -214,14 +220,12 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--ignore-paths='{0}' ", regexStr);
             }
 
-            if (RunCommand("git", arguments.ToString()) != 0)
+            if (_commandRunner.Run("git", arguments.ToString()) != 0)
             {
-                return MigrateResult.FailToExecuteSvnFetchCommand;
+                throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
             }
 
             GetBranches();
-
-            return MigrateResult.OK;
         }
 
         private string GitConfigCommandArguments
@@ -232,7 +236,7 @@ namespace Svn2GitNet
                 {
                     string standardOutput;
                     string standardError;
-                    RunCommand("git", "config --local --get user.name", out standardOutput, out standardError);
+                    _commandRunner.Run("git", "config --local --get user.name", out standardOutput, out standardError);
                     string combinedOutput = standardOutput + standardError;
                     _gitConfigCommandArguments = Regex.IsMatch(combinedOutput, @"/unknown option/m") ? "config" : "config --local";
                 }
@@ -247,28 +251,76 @@ namespace Svn2GitNet
             // '*' character used to indicate the currently selected branch.
             string standardOutput = string.Empty;
             string standardError = string.Empty;
-            RunCommand("git", "branch -l --no-color", out standardOutput, out standardError);
+            _commandRunner.Run("git", "branch -l --no-color", out standardOutput, out standardError);
             _localBranches = standardOutput
                         .Split("\n", StringSplitOptions.RemoveEmptyEntries)
                         .Select(x => x.Replace("*", "").Trim());
 
-            RunCommand("git", "branch -r --no-color", out standardOutput, out standardError);
+            _commandRunner.Run("git", "branch -r --no-color", out standardOutput, out standardError);
             _remoteBranches = standardOutput
                         .Split("\n", StringSplitOptions.RemoveEmptyEntries)
                         .Select(x => x.Replace("*", "").Trim());
 
             // Tags are remote branches that start with "tags/".
-            _tags = _remoteBranches.ToList().FindAll(x => Regex.IsMatch(x.Trim(), @"%r{^svn\/tags\/"));
+            _tags = _remoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"%r{^svn\/tags\/"));
         }
 
         private void GetRebaseBranch()
         {
+            GetBranches();
 
+            _localBranches = _localBranches.ToList().FindAll(l => l == _options.RebaseBranch);
+            _remoteBranches = _remoteBranches.ToList().FindAll(r => r == _options.RebaseBranch);
+
+            if (_localBranches.Count() > 1)
+            {
+                throw new MigrateException("Too many matching local branches found.");
+            }
+
+            if (!_localBranches.Any())
+            {
+                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_LOCAL_BRANCH_FOUND, _options.RebaseBranch));
+            }
+
+            if (_remoteBranches.Count() > 2)
+            {
+                // 1 if remote is not pushed, 2 if its pushed to remote.
+                throw new MigrateException("Too many matching remote branches found.");
+            }
+
+            if (!_remoteBranches.Any())
+            {
+                throw new MigrateException($"No remote branch named '{_options.RebaseBranch}' found.");
+            }
+
+            string foundLocalBranch = _localBranches.First();
+            _messageDisplayer.Show($"Local branches '{foundLocalBranch}' found");
+
+            string foundRemoteBranches = string.Join(" ", _remoteBranches);
+            _messageDisplayer.Show($"Remote branches '{foundRemoteBranches}' found");
+
+            // We only rebase the specified branch
+            _tags = null;
         }
 
         private void FixTags()
         {
+            string currentUserName;
+            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
 
+            string currentUserEmail;
+            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+
+            if (_tags != null)
+            {
+                foreach(string t in _tags)
+                {
+                    string tag = t.Trim();
+                    string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
+
+                    // TODO:
+                }
+            }
         }
 
         private void FixBranches()
@@ -283,7 +335,7 @@ namespace Svn2GitNet
 
         private void OptimizeRepos()
         {
-            RunCommand("git", "gc");
+            _commandRunner.Run("git", "gc");
         }
 
         private void Log(string message)
@@ -294,23 +346,21 @@ namespace Svn2GitNet
             }
         }
 
-        private MigrateResult VerifyWorkingTreeIsClean()
+        private void VerifyWorkingTreeIsClean()
         {
             string standardOutput = string.Empty;
             string standardError = string.Empty;
 
-            int exitCode = RunCommand("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
+            int exitCode = _commandRunner.Run("git", "status --porcelain --untracked-files=no", out standardOutput, out standardError);
             if (exitCode != 0)
             {
-                return MigrateResult.FailToExecuteCommand;
+                throw new MigrateException($"Fail to execute command 'git status --porcelain --untracked-files=no'. Run with -v or --verbose for details.");
             }
 
             if (!string.IsNullOrWhiteSpace(standardOutput) || !string.IsNullOrWhiteSpace(standardError))
             {
-                return MigrateResult.WorkingTreeIsNotClean;
+                throw new MigrateException("You have local pending changes. The working tree must be clean in order to continue.");
             }
-
-            return MigrateResult.OK;
         }
 
         private string GetDefaultAuthorsOption()
@@ -321,37 +371,6 @@ namespace Svn2GitNet
             }
 
             return string.Empty;
-        }
-
-        private int RunCommand(string cmd, string arguments)
-        {
-            string standardOutput;
-            string standardError;
-
-            return RunCommand(cmd, arguments, out standardOutput, out standardError);
-        }
-
-        private int RunCommand(string cmd, string arguments, out string standardOutput, out string standardError)
-        {
-            Process commandProcess = new Process
-            {
-                StartInfo =
-                {
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    FileName = cmd,
-                    Arguments = arguments
-                }
-            };
-
-            commandProcess.Start();
-
-            standardOutput = commandProcess.StandardOutput.ReadToEnd();
-            standardError = commandProcess.StandardError.ReadToEnd();
-
-            return commandProcess.ExitCode;
         }
     }
 }

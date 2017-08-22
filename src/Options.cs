@@ -129,7 +129,7 @@ namespace Svn2GitNet
         }
 
         [Option("rebasebranch", HelpText = "Rebase specified branch")]
-        public bool RebaseBranch
+        public string RebaseBranch
         {
             get;
             set;
