@@ -85,5 +85,69 @@ namespace Svn2GitNet.Tests
             // Assert
             Assert.Equal(expected, actual);
         }
+
+        [Fact]
+        public void RemoveFromTwoEndsOnlyEndTest()
+        {
+            // Prepare
+            string source = "haha'";
+            char pattern = '\'';
+
+            string expected = "haha";
+
+            // Act
+            string actual = Utils.RemoveFromTwoEnds(source, pattern);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void RemoveFromTwoEndsOnlyBeginTest()
+        {
+            // Prepare
+            string source = "'haha";
+            char pattern = '\'';
+
+            string expected = "haha";
+
+            // Act
+            string actual = Utils.RemoveFromTwoEnds(source, pattern);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void RemoveFromTwoEndsBeginEndTest()
+        {
+            // Prepare
+            string source = "'haha'";
+            char pattern = '\'';
+
+            string expected = "haha";
+
+            // Act
+            string actual = Utils.RemoveFromTwoEnds(source, pattern);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void RemoveFromTwoEndsPatternNotFoundTest()
+        {
+            // Prepare
+            string source = "haha";
+            char pattern = '\'';
+
+            string expected = "haha";
+
+            // Act
+            string actual = Utils.RemoveFromTwoEnds(source, pattern);
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
     }
 }

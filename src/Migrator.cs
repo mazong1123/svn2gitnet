@@ -175,7 +175,7 @@ namespace Svn2GitNet
             {
                 _commandRunner.Run("git",
                             string.Format("{0} svn.authorsfile {1}",
-                            _gitConfigCommandArguments, _options.Authors));
+                            GitConfigCommandArguments, _options.Authors));
             }
 
             arguments = new StringBuilder("svn fetch ");
@@ -306,17 +306,27 @@ namespace Svn2GitNet
         private void FixTags()
         {
             string currentUserName;
-            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
+            _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.name", out currentUserName);
 
             string currentUserEmail;
-            _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+            _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.email", out currentUserEmail);
 
             if (_tags != null)
             {
-                foreach(string t in _tags)
+                foreach (string t in _tags)
                 {
                     string tag = t.Trim();
                     string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
+
+                    string quotesFreeTag = Utils.EscapeQuotes(tag);
+                    string subject = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%s' \"{quotesFreeTag}\""), '\'');
+                    string date = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ci' \"{quotesFreeTag}\""), '\'');
+                    string author = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%an' \"{quotesFreeTag}\""), '\'');
+                    string email = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ae' \"{quotesFreeTag}\""), '\'');
+
+                    string quotesFreeAuthor = Utils.EscapeQuotes(author);
+                    _commandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{quotesFreeAuthor}\"");
+                    _commandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{quotesFreeAuthor}\"");
 
                     // TODO:
                 }
@@ -371,6 +381,14 @@ namespace Svn2GitNet
             }
 
             return string.Empty;
+        }
+
+        private string RunCommandIgnoreExitCode(string cmd, string arguments)
+        {
+            string standardOutput;
+            _commandRunner.Run(cmd, arguments, out standardOutput);
+
+            return standardOutput;
         }
     }
 }
