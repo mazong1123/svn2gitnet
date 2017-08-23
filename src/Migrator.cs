@@ -12,7 +12,6 @@ namespace Svn2GitNet
     {
         // TODO: Add windows support.
         private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
-        private readonly string _dir;
 
         private ICommandRunner _commandRunner;
         private IMessageDisplayer _messageDisplayer;
@@ -50,9 +49,18 @@ namespace Svn2GitNet
                 _options.Authors = GetDefaultAuthorsOption();
             }
 
-            if (_options.Rebase || !string.IsNullOrWhiteSpace(_options.RebaseBranch))
+            if (_options.Rebase)
             {
                 if (_args.Length > 1)
+                {
+                    throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
+                }
+
+                VerifyWorkingTreeIsClean();
+            }
+            else if (!string.IsNullOrWhiteSpace(_options.RebaseBranch))
+            {
+                if (_args.Length > 2)
                 {
                     throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
                 }
@@ -369,12 +377,98 @@ namespace Svn2GitNet
 
         private void FixBranches()
         {
+            var svnBranches = _remoteBranches.Except(_tags).ToList();
+            svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"%r{^svn\/}"));
 
+            if (_options.Rebase)
+            {
+                int exitCode = _commandRunner.Run("git", "svn fetch");
+                if (exitCode != 0)
+                {
+                    throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, "git svn fetch"));
+                }
+            }
+
+            // In case of large branches, we build a hash set to boost the query later.
+            HashSet<string> localBranchSet = new HashSet<string>(_localBranches);
+
+            bool cannotSetupTrackingInformation = false;
+            bool legacySvnBranchTrackingMessageDisplayed = false;
+
+            foreach (var b in svnBranches)
+            {
+                var branch = Regex.Replace(b, @"/^svn\//", "").Trim();
+                bool isTrunkBranchOrIsLocalBranch = branch.Equals("trunk", StringComparison.InvariantCulture)
+                                                    || localBranchSet.Contains(branch);
+                if (_options.Rebase
+                    && isTrunkBranchOrIsLocalBranch)
+                {
+                    string localBranch = branch == "trunk" ? "master" : branch;
+
+                    _commandRunner.Run("git", $"checkout -f \"{localBranch}\"");
+                    _commandRunner.Run("git", $"rebase \"remotes/svn/{branch}\"");
+
+                    continue;
+                }
+
+                if (isTrunkBranchOrIsLocalBranch)
+                {
+                    continue;
+                }
+
+                if (cannotSetupTrackingInformation)
+                {
+                    CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnBranchCommandInfo(branch);
+                    _commandRunner.Run(ci.Command, ci.Arguments);
+                }
+                else
+                {
+                    string status = RunCommandIgnoreExitCode("git", $"branch --track \"{branch}\" \"remotes/svn/{branch}\"");
+
+                    // As of git 1.8.3.2, tracking information cannot be set up for remote SVN branches:
+                    // http://git.661346.n2.nabble.com/git-svn-Use-prefix-by-default-td7594288.html#a7597159
+                    //
+                    // Older versions of git can do it and it should be safe as long as remotes aren't pushed.
+                    // Our --rebase option obviates the need for read-only tracked remotes, however.  So, we'll
+                    // deprecate the old option, informing those relying on the old behavior that they should
+                    // use the newer --rebase otion.
+                    if (Regex.IsMatch(status, @"/Cannot setup tracking information/m"))
+                    {
+                        cannotSetupTrackingInformation = true;
+                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnBranchCommandInfo(branch);
+                        _commandRunner.Run(ci.Command, ci.Arguments);
+                    }
+                    else
+                    {
+                        if (!legacySvnBranchTrackingMessageDisplayed)
+                        {
+                            ShowTrackingRemoteSvnBranchesDeprecatedWarning();
+                        }
+
+                        legacySvnBranchTrackingMessageDisplayed = true;
+
+                        _commandRunner.Run("git", $"checkout \"{branch}\"");
+                    }
+                }
+            }
         }
 
         private void FixTrunk()
         {
+            if (_remoteBranches != null)
+            {
+                string trunkBranch = _remoteBranches.ToList().Find(b => b.Trim().Equals("trunk"));
+                if (trunkBranch != null && !_options.Rebase)
+                {
+                    _commandRunner.Run("git", "checkout svn/trunk");
+                    _commandRunner.Run("git", "branch -D master");
+                    _commandRunner.Run("git", "checkout -f -b master");
 
+                    return;
+                }
+            }
+
+            _commandRunner.Run("git", "checkout -f master");
         }
 
         private void OptimizeRepos()
@@ -423,6 +517,27 @@ namespace Svn2GitNet
             _commandRunner.Run(cmd, arguments, out standardOutput);
 
             return standardOutput;
+        }
+
+        private void ShowTrackingRemoteSvnBranchesDeprecatedWarning()
+        {
+            StringBuilder message = new StringBuilder();
+            for (int i = 0; i < 68; ++i)
+            {
+                message.Append("*");
+            }
+            message.AppendLine();
+
+            message.AppendLine("svn2git warning: Tracking remote SVN branches is deprecated.");
+            message.AppendLine("In a future release local branches will be created without tracking.");
+            message.AppendLine("If you must resync your branches, run: svn2git --rebase");
+
+            for (int i = 0; i < 68; ++i)
+            {
+                message.Append("*");
+            }
+
+            _messageDisplayer.Show(message.ToString());
         }
     }
 }

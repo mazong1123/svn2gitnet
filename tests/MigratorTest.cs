@@ -47,7 +47,7 @@ namespace Svn2GitNet.Tests
         public void RebaseBranchWithExtraArgumentsInitializeTest()
         {
             // Prepare
-            string[] args = new string[] { "--rebasebranch", "extraarg" };
+            string[] args = new string[] { "--rebasebranch", "normalarg", "extraarg" };
             Migrator migrator = new Migrator(new Options(), args);
             
             // Act
