@@ -305,30 +305,64 @@ namespace Svn2GitNet
 
         private void FixTags()
         {
-            string currentUserName;
-            _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.name", out currentUserName);
-
-            string currentUserEmail;
-            _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.email", out currentUserEmail);
-
-            if (_tags != null)
+            string currentUserName = string.Empty;
+            string currentUserEmail = string.Empty;
+            try
             {
-                foreach (string t in _tags)
+                _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.name", out currentUserName);
+                _commandRunner.Run("git", $"{GitConfigCommandArguments} --get user.email", out currentUserEmail);
+
+                if (_tags != null)
                 {
-                    string tag = t.Trim();
-                    string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
+                    foreach (string t in _tags)
+                    {
+                        string tag = t.Trim();
+                        string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
 
-                    string quotesFreeTag = Utils.EscapeQuotes(tag);
-                    string subject = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%s' \"{quotesFreeTag}\""), '\'');
-                    string date = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ci' \"{quotesFreeTag}\""), '\'');
-                    string author = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%an' \"{quotesFreeTag}\""), '\'');
-                    string email = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ae' \"{quotesFreeTag}\""), '\'');
+                        string quotesFreeTag = Utils.EscapeQuotes(tag);
+                        string subject = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%s' \"{quotesFreeTag}\""), '\'');
+                        string date = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ci' \"{quotesFreeTag}\""), '\'');
+                        string author = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%an' \"{quotesFreeTag}\""), '\'');
+                        string email = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ae' \"{quotesFreeTag}\""), '\'');
 
-                    string quotesFreeAuthor = Utils.EscapeQuotes(author);
-                    _commandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{quotesFreeAuthor}\"");
-                    _commandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{quotesFreeAuthor}\"");
+                        string quotesFreeAuthor = Utils.EscapeQuotes(author);
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{quotesFreeAuthor}\"");
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{quotesFreeAuthor}\"");
 
-                    // TODO:
+                        string originalGitCommitterDate = Environment.GetEnvironmentVariable("GIT_COMMITTER_DATE");
+                        Environment.SetEnvironmentVariable("GIT_COMMITTER_DATE", Utils.EscapeQuotes(date));
+                        _commandRunner.Run("git", $"tag -a -m \"{Utils.EscapeQuotes(subject)}\" \"{Utils.EscapeQuotes(id)}\" \"{quotesFreeTag}\"");
+                        Environment.SetEnvironmentVariable("GIT_COMMITTER_DATE", originalGitCommitterDate);
+
+                        _commandRunner.Run("git", $"git branch -d -r \"{quotesFreeTag}\"");
+                    }
+                }
+            }
+            finally
+            {
+                // We only change the git config values if there are @tags available.
+                // So it stands to reason we should revert them only in that case.
+                if (_tags != null && _tags.Any())
+                {
+                    // If a line was read, then there was a config value so restore it.
+                    // Otherwise unset the value because originally there was none.
+                    if (!string.IsNullOrWhiteSpace(currentUserName))
+                    {
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{currentUserName.Trim()}\"");
+                    }
+                    else
+                    {
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} --unset user.name");
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(currentUserEmail))
+                    {
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{currentUserEmail.Trim()}\"");
+                    }
+                    else
+                    {
+                        _commandRunner.Run("git", $"{GitConfigCommandArguments} --unset user.email");
+                    }
                 }
             }
         }
