@@ -180,25 +180,25 @@ namespace Svn2GitNet
             _metaInfo.LocalBranches = _metaInfo.LocalBranches.ToList().FindAll(l => l == _options.RebaseBranch);
             _metaInfo.RemoteBranches = _metaInfo.RemoteBranches.ToList().FindAll(r => r == _options.RebaseBranch);
 
-            if (_metaInfo.LocalBranches.Count() > 1)
-            {
-                throw new MigrateException("Too many matching local branches found.");
-            }
-
             if (!_metaInfo.LocalBranches.Any())
             {
                 throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_LOCAL_BRANCH_FOUND, _options.RebaseBranch));
             }
 
+            if (_metaInfo.LocalBranches.Count() > 1)
+            {
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_MATCHING_LOCAL_BRANCHES);
+            }
+
             if (_metaInfo.RemoteBranches.Count() > 2)
             {
                 // 1 if remote is not pushed, 2 if its pushed to remote.
-                throw new MigrateException("Too many matching remote branches found.");
+                throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_MATCHING_REMOTE_BRANCHES);
             }
 
             if (!_metaInfo.RemoteBranches.Any())
             {
-                throw new MigrateException($"No remote branch named '{_options.RebaseBranch}' found.");
+                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_REMOTE_BRANCH_FOUND, _options.RebaseBranch));
             }
 
             string foundLocalBranch = _metaInfo.LocalBranches.First();
@@ -207,8 +207,8 @@ namespace Svn2GitNet
             string foundRemoteBranches = string.Join(" ", _metaInfo.RemoteBranches);
             ShowMessageIfPossible($"Remote branches '{foundRemoteBranches}' found");
 
-            // We only rebase the specified branch
-            _metaInfo.Tags = null;
+            // We only rebase the specified branch. Clear tags now.
+            _metaInfo.Tags = new List<string>();
         }
 
         public MetaInfo GetMetaInfo()
