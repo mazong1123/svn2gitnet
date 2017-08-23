@@ -44,13 +44,13 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             var mock = new Mock<ICommandRunner>();
-            var standardOutput = "*master";
+            var standardOutput = "origin/master";
             mock.Setup(f => f.Run("git", "branch -r --no-color", out standardOutput))
                 .Returns(0);
             IGrabber grabber = new Grabber(testSvnUrl, new Options(), mock.Object, "", null);
 
             List<string> expected = new List<string>(new string[]{
-                "master"
+                "origin/master"
             });
 
             // Act
@@ -92,21 +92,44 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             var mock = new Mock<ICommandRunner>();
-            var standardOutput = $"*master{Environment.NewLine}dev{Environment.NewLine}test";
+            var standardOutput = $"origin/master{Environment.NewLine}origin/dev{Environment.NewLine}origin/test";
             mock.Setup(f => f.Run("git", "branch -r --no-color", out standardOutput))
                 .Returns(0);
             IGrabber grabber = new Grabber(testSvnUrl, new Options(), mock.Object, "", null);
 
             List<string> expected = new List<string>(new string[]{
-                "master",
-                "dev",
-                "test"
+                "origin/master",
+                "origin/dev",
+                "origin/test"
             });
 
             // Act
             grabber.FetchBranches();
 
             var actual = grabber.GetMetaInfo().RemoteBranches;
+
+            // Assert
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        public void FetchBranchesHasOneTagTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            var standardOutput = $"origin/master{Environment.NewLine}origin/dev{Environment.NewLine}svn/tags/v1.0.0";
+            mock.Setup(f => f.Run("git", "branch -r --no-color", out standardOutput))
+                .Returns(0);
+            IGrabber grabber = new Grabber(testSvnUrl, new Options(), mock.Object, "", null);
+
+            List<string> expected = new List<string>(new string[]{
+                "svn/tags/v1.0.0"
+            });
+
+            // Act
+            grabber.FetchBranches();
+
+            var actual = grabber.GetMetaInfo().Tags;
 
             // Assert
             Assert.Equal(expected, actual);

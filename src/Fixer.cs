@@ -23,7 +23,7 @@ namespace Svn2GitNet
         public void FixBranches()
         {
             var svnBranches = _metaInfo.RemoteBranches.Except(_metaInfo.Tags).ToList();
-            svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"%r{^svn\/}"));
+            svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
 
             if (_options.Rebase)
             {
@@ -111,7 +111,7 @@ namespace Svn2GitNet
                     foreach (string t in _metaInfo.Tags)
                     {
                         string tag = t.Trim();
-                        string id = Regex.Replace(tag, @"%r{^svn\/tags\/}", "").Trim();
+                        string id = Regex.Replace(tag, @"^svn\/tags\/", "").Trim();
 
                         string quotesFreeTag = Utils.EscapeQuotes(tag);
                         string subject = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%s' \"{quotesFreeTag}\""), '\'');

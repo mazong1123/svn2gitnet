@@ -170,7 +170,7 @@ namespace Svn2GitNet
             _metaInfo.RemoteBranches = FetchBranchesWorker(false);
 
             // Tags are remote branches that start with "tags/".
-            _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"%r{^svn\/tags\/"));
+            _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"^svn\/tags\/"));
         }
 
         public void FetchRebaseBraches()
