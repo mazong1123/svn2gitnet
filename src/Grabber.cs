@@ -20,7 +20,12 @@ namespace Svn2GitNet
         : base(options, commandRunner, gitConfigCommandArguments, messageDisplayer)
         {
             _svnUrl = svnUrl;
-            _metaInfo = new MetaInfo();
+            _metaInfo = new MetaInfo()
+            {
+                RemoteBranches = new List<string>(),
+                LocalBranches = new List<string>(),
+                Tags = new List<string>()
+            };
         }
 
         public void Clone()
@@ -161,19 +166,8 @@ namespace Svn2GitNet
 
         public void FetchBranches()
         {
-            // Get the list of local and remote branches, taking care to ignore console color codes and ignoring the
-            // '*' character used to indicate the currently selected branch.
-            string standardOutput = string.Empty;
-            string standardError = string.Empty;
-            _commandRunner.Run("git", "branch -l --no-color", out standardOutput, out standardError);
-            _metaInfo.LocalBranches = standardOutput
-                        .Split("\n", StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => x.Replace("*", "").Trim());
-
-            _commandRunner.Run("git", "branch -r --no-color", out standardOutput, out standardError);
-            _metaInfo.RemoteBranches = standardOutput
-                        .Split("\n", StringSplitOptions.RemoveEmptyEntries)
-                        .Select(x => x.Replace("*", "").Trim());
+            _metaInfo.LocalBranches = FetchBranchesWorker(true);
+            _metaInfo.RemoteBranches = FetchBranchesWorker(false);
 
             // Tags are remote branches that start with "tags/".
             _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"%r{^svn\/tags\/"));
@@ -220,6 +214,24 @@ namespace Svn2GitNet
         public MetaInfo GetMetaInfo()
         {
             return _metaInfo;
+        }
+
+        private IEnumerable<string> FetchBranchesWorker(bool isLocal)
+        {
+            // Get the list of local and remote branches, taking care to ignore console color codes and ignoring the
+            // '*' character used to indicate the currently selected branch.
+            string parameter = isLocal ? "l" : "r";
+            string branchInfo = RunCommandIgnoreExitCode("git", $"branch -{parameter} --no-color");
+
+            IEnumerable<string> branches = new List<string>();
+            if (!string.IsNullOrWhiteSpace(branchInfo))
+            {
+                branches = branchInfo
+                           .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                           .Select(x => x.Replace("*", "").Trim());
+            }
+
+            return branches;
         }
     }
 }

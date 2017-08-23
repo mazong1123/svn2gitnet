@@ -184,14 +184,6 @@ namespace Svn2GitNet
             _commandRunner.Run("git", "gc");
         }
 
-        private string RunCommandIgnoreExitCode(string cmd, string arguments)
-        {
-            string standardOutput;
-            _commandRunner.Run(cmd, arguments, out standardOutput);
-
-            return standardOutput;
-        }
-
         private void ShowTrackingRemoteSvnBranchesDeprecatedWarning()
         {
             StringBuilder message = new StringBuilder();

@@ -35,5 +35,13 @@ namespace Svn2GitNet
                 Console.WriteLine(message);
             }
         }
+
+        protected string RunCommandIgnoreExitCode(string cmd, string arguments)
+        {
+            string standardOutput;
+            _commandRunner.Run(cmd, arguments, out standardOutput);
+
+            return standardOutput;
+        }
     }
 }
