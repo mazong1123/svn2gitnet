@@ -33,12 +33,12 @@ namespace Svn2GitNet
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
             {
-                arguments.AppendFormat("--username='{0}'", _options.UserName);
+                arguments.AppendFormat("--username='{0}' ", _options.UserName);
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Password))
             {
-                arguments.AppendFormat("--password='{0}'", _options.Password);
+                arguments.AppendFormat("--password='{0}' ", _options.Password);
             }
 
             if (!_options.IncludeMetaData)
@@ -51,8 +51,8 @@ namespace Svn2GitNet
                 arguments.Append("--no-minimize-url ");
             }
 
-            var branches = new List<string>(_options.Branches);
-            var tags = new List<string>(_options.Tags);
+            var branches = _options.Branches == null ? new List<string>() : new List<string>(_options.Branches);
+            var tags = _options.Tags == null ? new List<string>() : new List<string>(_options.Tags);
 
             if (_options.RootIsTrunk)
             {
