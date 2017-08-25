@@ -33,12 +33,12 @@ namespace Svn2GitNet
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
             {
-                arguments.AppendFormat("--username='{0}'", _options.UserName);
+                arguments.AppendFormat("--username='{0}' ", _options.UserName);
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Password))
             {
-                arguments.AppendFormat("--password='{0}'", _options.Password);
+                arguments.AppendFormat("--password='{0}' ", _options.Password);
             }
 
             if (!_options.IncludeMetaData)
@@ -51,22 +51,21 @@ namespace Svn2GitNet
                 arguments.Append("--no-minimize-url ");
             }
 
-            var branches = new List<string>(_options.Branches);
-            var tags = new List<string>(_options.Tags);
+            var branches = _options.Branches == null ? new List<string>() : new List<string>(_options.Branches);
+            var tags = _options.Tags == null ? new List<string>() : new List<string>(_options.Tags);
 
             if (_options.RootIsTrunk)
             {
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
                 arguments.AppendFormat("--trunk='{0}'", _svnUrl);
-                _commandRunner.Run("git", arguments.ToString());
             }
             else
             {
                 // Add each component to the command that was passed as an argument.
                 if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
                 {
-                    arguments.AppendFormat("--trunk='{0}'", _options.SubpathToTrunk);
+                    arguments.AppendFormat("--trunk='{0}' ", _options.SubpathToTrunk);
                 }
 
                 if (!_options.NoTags)
@@ -100,11 +99,12 @@ namespace Svn2GitNet
                 }
 
                 arguments.Append(_svnUrl);
+            }
 
-                if (_commandRunner.Run("git", arguments.ToString()) != 0)
-                {
-                    throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
-                }
+            if (_commandRunner.Run("git", arguments.ToString()) != 0)
+            {
+                string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
+                throw new MigrateException(exceptionMessage);
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Authors))
