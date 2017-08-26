@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -120,7 +119,7 @@ namespace Svn2GitNet
                 var range = _options.Revision.Split(":");
                 string start = range[0];
                 string end = range.Length < 2 || string.IsNullOrWhiteSpace(range[1]) ? "HEAD" : range[1];
-                arguments.AppendFormat("-r {0}:{1}", start, end);
+                arguments.AppendFormat("-r {0}:{1} ", start, end);
             }
 
             if (_options.Exclude != null && _options.Exclude.Any())
@@ -156,7 +155,7 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--ignore-paths='{0}' ", regexStr);
             }
 
-            if (_commandRunner.Run("git", arguments.ToString()) != 0)
+            if (_commandRunner.Run("git", arguments.ToString().Trim()) != 0)
             {
                 throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
             }

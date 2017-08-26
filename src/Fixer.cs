@@ -22,15 +22,20 @@ namespace Svn2GitNet
 
         public void FixBranches()
         {
-            var svnBranches = _metaInfo.RemoteBranches.Except(_metaInfo.Tags).ToList();
-            svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
+            List<string> svnBranches = new List<string>();
+            if (_metaInfo.RemoteBranches != null)
+            {
+                svnBranches = _metaInfo.RemoteBranches.Except(_metaInfo.Tags).ToList();
+                svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
+            }
 
             if (_options.Rebase)
             {
-                int exitCode = _commandRunner.Run("git", "svn fetch");
+                string args = "svn fetch";
+                int exitCode = _commandRunner.Run("git", args);
                 if (exitCode != 0)
                 {
-                    throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, "git svn fetch"));
+                    throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {args}"));
                 }
             }
 
