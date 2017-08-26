@@ -646,5 +646,33 @@ namespace Svn2GitNet.Tests
             // Assert
             mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
         }
+
+        [Fact]
+        public void CloneWhenRevisionIsNotEmptyTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                SubpathToTrunk = "subpath",
+                IncludeMetaData = true,
+                NoBranches = true,
+                NoTags = true,
+                RootIsTrunk = false,
+                Revision = "123:456"
+            };
+
+            string expectedArguments = "svn fetch -r 123:456";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
     }
 }
