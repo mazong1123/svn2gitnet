@@ -674,5 +674,228 @@ namespace Svn2GitNet.Tests
             // Assert
             mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
         }
+
+        [Fact]
+        public void CloneWhenExcludeIsNotEmptyRootIsTrunkTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                IncludeMetaData = true,
+                NoBranches = true,
+                NoTags = true,
+                RootIsTrunk = true,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                }
+            };
+
+            string expectedArguments = "svn fetch --ignore-paths='^(?:)(?:ex1|ex2)'";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
+
+        [Fact]
+        public void CloneWhenExcludeIsNotEmptyRevisionIsNotEmptyRootIsTrunkTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                IncludeMetaData = true,
+                NoBranches = true,
+                NoTags = true,
+                RootIsTrunk = true,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                },
+                Revision = "123:456"
+            };
+
+            string expectedArguments = "svn fetch -r 123:456 --ignore-paths='^(?:)(?:ex1|ex2)'";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
+
+        [Fact]
+        public void CloneWhenExcludeIsNotEmptyRootIsNotTrunkTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                SubpathToTrunk = "subpath",
+                IncludeMetaData = true,
+                NoBranches = true,
+                NoTags = true,
+                RootIsTrunk = false,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                }
+            };
+
+            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/])(?:ex1|ex2)'";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
+
+        [Fact]
+        public void CloneWhenExcludeIsNotEmptyRootIsNotTrunkHasTagsTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                SubpathToTrunk = "subpath",
+                IncludeMetaData = true,
+                NoBranches = true,
+                NoTags = false,
+                RootIsTrunk = false,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                },
+                Tags = new List<string>()
+                {
+                    "tag1",
+                    "tag2"
+                }
+            };
+
+            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/]|tag1[/][^/]+[/]|tag2[/][^/]+[/])(?:ex1|ex2)'";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
+
+        [Fact]
+        public void CloneWhenExcludeIsNotEmptyRootIsNotTrunkHasTagsHasBranchesTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                SubpathToTrunk = "subpath",
+                IncludeMetaData = true,
+                NoBranches = false,
+                NoTags = false,
+                RootIsTrunk = false,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                },
+                Tags = new List<string>()
+                {
+                    "tag1",
+                    "tag2"
+                },
+                Branches = new List<string>()
+                {
+                    "branch1",
+                    "branch2"
+                }
+            };
+
+            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/]|tag1[/][^/]+[/]|tag2[/][^/]+[/]|branch1[/][^/]+[/]|branch2[/][^/]+[/])(?:ex1|ex2)'";
+
+            mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.Clone();
+
+            // Assert
+            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+        }
+
+        [Fact]
+        public void GetMetaInfoTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            Options options = new Options()
+            {
+                SubpathToTrunk = "subpath",
+                IncludeMetaData = true,
+                NoBranches = false,
+                NoTags = false,
+                RootIsTrunk = false,
+                Exclude = new List<string>()
+                {
+                    "ex1",
+                    "ex2"
+                },
+                Tags = new List<string>()
+                {
+                    "tag1",
+                    "tag2"
+                },
+                Branches = new List<string>()
+                {
+                    "branch1",
+                    "branch2"
+                }
+            };
+
+            var standardOutput = "*branch1";
+            mock.Setup(f => f.Run("git", "branch -l --no-color", out standardOutput))
+                .Returns(0);
+
+            standardOutput = "svn/tags/branch2";
+            mock.Setup(f => f.Run("git", "branch -r --no-color", out standardOutput))
+                .Returns(0);
+
+            IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
+
+            // Act
+            grabber.FetchBranches();
+            var actual = grabber.GetMetaInfo();
+
+            // Assert
+            Assert.Equal(new List<string>() { "svn/tags/branch2" }, actual.Tags);
+            Assert.Equal(new List<string>() { "branch1" }, actual.LocalBranches);
+            Assert.Equal(new List<string>() { "svn/tags/branch2" }, actual.RemoteBranches);
+        }
     }
 }
