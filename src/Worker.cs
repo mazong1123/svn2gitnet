@@ -36,12 +36,32 @@ namespace Svn2GitNet
             }
         }
 
+        protected string RunCommandIgnoreExitCode(CommandInfo cmdInfo)
+        {
+            return RunCommandIgnoreExitCode(cmdInfo.Command, cmdInfo.Arguments);
+        }
+
         protected string RunCommandIgnoreExitCode(string cmd, string arguments)
         {
             string standardOutput;
             _commandRunner.Run(cmd, arguments, out standardOutput);
 
             return standardOutput;
+        }
+
+        protected int RunCommand(CommandInfo cmdInfo)
+        {
+            return _commandRunner.Run(cmdInfo.Command, cmdInfo.Arguments);
+        }
+
+        protected int RunCommand(CommandInfo cmdInfo, out string standardOutput)
+        {
+            return _commandRunner.Run(cmdInfo.Command, cmdInfo.Arguments, out standardOutput);
+        }
+
+        protected int RunCommand(CommandInfo cmdInfo, out string standardOutput, out string standardError)
+        {
+            return _commandRunner.Run(cmdInfo.Command, cmdInfo.Arguments, out standardOutput, out standardError);
         }
     }
 }

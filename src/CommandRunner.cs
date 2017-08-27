@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
 
 namespace Svn2GitNet
@@ -16,7 +17,7 @@ namespace Svn2GitNet
         public int Run(string cmd, string arguments, out string standardOutput)
         {
             string standardError;
-            
+
             return Run(cmd, arguments, out standardOutput, out standardError);
         }
 
@@ -35,7 +36,14 @@ namespace Svn2GitNet
                 }
             };
 
-            commandProcess.Start();
+            try
+            {
+                commandProcess.Start();
+            }
+            catch (Win32Exception)
+            {
+                throw new MigrateException($"Command {cmd} does not exit. Did you install it or add it to the Environment path?");
+            }
 
             standardOutput = commandProcess.StandardOutput.ReadToEnd();
             standardError = commandProcess.StandardError.ReadToEnd();

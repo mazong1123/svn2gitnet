@@ -1,5 +1,7 @@
 ﻿using System;
 using CommandLine;
+using CommandLine.Text;
+using System.IO;
 
 namespace Svn2GitNet
 {
@@ -22,6 +24,7 @@ namespace Svn2GitNet
             catch (MigrateException ex)
             {
                 Console.WriteLine(ex.Message);
+                Console.WriteLine("Type 'svn2gitnet --help' for more information");
 
                 return -1;
             }
