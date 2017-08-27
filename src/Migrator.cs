@@ -121,7 +121,7 @@ namespace Svn2GitNet
                     string standardError;
                     _commandRunner.Run("git", "config --local --get user.name", out standardOutput, out standardError);
                     string combinedOutput = standardOutput + standardError;
-                    _gitConfigCommandArguments = Regex.IsMatch(combinedOutput, @"/unknown option/m") ? "config" : "config --local";
+                    _gitConfigCommandArguments = Regex.IsMatch(combinedOutput, @"(?m)unknown option") ? "config" : "config --local";
                 }
 
                 return _gitConfigCommandArguments;
