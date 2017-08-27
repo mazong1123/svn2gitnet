@@ -32,12 +32,12 @@ namespace Svn2GitNet
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
             {
-                arguments.AppendFormat("--username='{0}' ", _options.UserName);
+                arguments.AppendFormat("--username=\"{0}\" ", _options.UserName);
             }
 
             if (!string.IsNullOrWhiteSpace(_options.Password))
             {
-                arguments.AppendFormat("--password='{0}' ", _options.Password);
+                arguments.AppendFormat("--password=\"{0}\" ", _options.Password);
             }
 
             if (!_options.IncludeMetaData)
@@ -57,14 +57,14 @@ namespace Svn2GitNet
             {
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
-                arguments.AppendFormat("--trunk='{0}'", _svnUrl);
+                arguments.AppendFormat("--trunk=\"{0}\"", _svnUrl);
             }
             else
             {
                 // Add each component to the command that was passed as an argument.
                 if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
                 {
-                    arguments.AppendFormat("--trunk='{0}' ", _options.SubpathToTrunk);
+                    arguments.AppendFormat("--trunk=\"{0}\" ", _options.SubpathToTrunk);
                 }
 
                 if (!_options.NoTags)
@@ -78,7 +78,7 @@ namespace Svn2GitNet
                     // Process default or user-supplied tags
                     foreach (var t in tags)
                     {
-                        arguments.AppendFormat("--tags='{0}' ", t);
+                        arguments.AppendFormat("--tags=\"{0}\" ", t);
                     }
                 }
 
@@ -93,7 +93,7 @@ namespace Svn2GitNet
                     // Process default or user-supplied branches
                     foreach (var b in branches)
                     {
-                        arguments.AppendFormat("--branches='{0}' ", b);
+                        arguments.AppendFormat("--branches=\"{0}\" ", b);
                     }
                 }
 
@@ -152,12 +152,12 @@ namespace Svn2GitNet
                 }
 
                 string regexStr = "^(?:" + string.Join("|", regex) + ")(?:" + string.Join("|", _options.Exclude) + ")";
-                arguments.AppendFormat("--ignore-paths='{0}' ", regexStr);
+                arguments.AppendFormat("--ignore-paths=\"{0}\" ", regexStr);
             }
 
             if (_commandRunner.Run("git", arguments.ToString().Trim()) != 0)
             {
-                throw new MigrateException($"Fail to execute command 'git {arguments.ToString()}'. Run with -v or --verbose for details.");
+                throw new MigrateException($"Fail to execute command \"git {arguments.ToString()}\". Run with -v or --verbose for details.");
             }
 
             FetchBranches();
@@ -201,10 +201,10 @@ namespace Svn2GitNet
             }
 
             string foundLocalBranch = _metaInfo.LocalBranches.First();
-            ShowMessageIfPossible($"Local branches '{foundLocalBranch}' found");
+            ShowMessageIfPossible($"Local branches \"{foundLocalBranch}\" found");
 
             string foundRemoteBranches = string.Join(" ", _metaInfo.RemoteBranches);
-            ShowMessageIfPossible($"Remote branches '{foundRemoteBranches}' found");
+            ShowMessageIfPossible($"Remote branches \"{foundRemoteBranches}\" found");
 
             // We only rebase the specified branch. Clear tags now.
             _metaInfo.Tags = new List<string>();

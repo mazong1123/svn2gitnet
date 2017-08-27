@@ -33,8 +33,11 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             string[] args = new string[] { "--rebase", "extraarg" };
-            Migrator migrator = new Migrator(new Options(), args);
-            
+            Migrator migrator = new Migrator(new Options()
+            {
+                Rebase = true
+            }, args);
+
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
 
@@ -48,8 +51,11 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             string[] args = new string[] { "--rebasebranch", "normalarg", "extraarg" };
-            Migrator migrator = new Migrator(new Options(), args);
-            
+            Migrator migrator = new Migrator(new Options()
+            {
+                RebaseBranch = "normalarg"
+            }, args);
+
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
 
@@ -59,18 +65,21 @@ namespace Svn2GitNet.Tests
         }
 
         [Fact]
-        public void SvnUrlWithExtraArgumentsInitializeTest()
+        public void SvnUrlWithUserNameAndPasswordInitializeTest()
         {
             // Prepare
-            string[] args = new string[] { "http://testsvnurl", "extraarg" };
-            Migrator migrator = new Migrator(new Options(), args);
-            
+            string[] args = new string[] { "http://testsvnurl", "--username=\"userName\"", "--password=\"123123\"" };
+            Migrator migrator = new Migrator(new Options()
+            {
+                UserName = "userName",
+                Password = "123123"
+            }, args);
+
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
 
             // Assert
-            Assert.IsType<MigrateException>(ex);
-            Assert.Equal(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS, ex.Message);
+            Assert.Null(ex);
         }
 
         [Fact]
@@ -79,7 +88,7 @@ namespace Svn2GitNet.Tests
             // Prepare
             string[] args = new string[] { "http://testsvnurl" };
             Migrator migrator = new Migrator(new Options(), args);
-            
+
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
 
