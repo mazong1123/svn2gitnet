@@ -39,11 +39,11 @@ namespace Svn2GitNet
 
             if (_options.Rebase)
             {
-                string args = "svn fetch";
-                int exitCode = _commandRunner.Run("git", args);
+                CommandInfo cmdInfo = CommandInfoBuilder.BuildGitSvnFetchCommandInfo();
+                int exitCode = RunCommand(cmdInfo);
                 if (exitCode != 0)
                 {
-                    throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {args}"));
+                    throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, cmdInfo.ToString()));
                 }
             }
 
@@ -62,8 +62,8 @@ namespace Svn2GitNet
                 {
                     string localBranch = branch == "trunk" ? "master" : branch;
 
-                    _commandRunner.Run("git", $"checkout -f \"{localBranch}\"");
-                    _commandRunner.Run("git", $"rebase \"remotes/svn/{branch}\"");
+                    RunCommand(CommandInfoBuilder.BuildForceCheckoutLocalBranchCommandInfo(localBranch));
+                    RunCommand(CommandInfoBuilder.BuildGitRebaseRemoteSvnBranchCommandInfo(branch));
 
                     continue;
                 }
@@ -80,7 +80,7 @@ namespace Svn2GitNet
                 }
                 else
                 {
-                    string status = RunCommandIgnoreExitCode("git", $"branch --track \"{branch}\" \"remotes/svn/{branch}\"");
+                    string status = RunCommandIgnoreExitCode(CommandInfoBuilder.BuildGitBranchTrackCommandInfo(branch));
 
                     // As of git 1.8.3.2, tracking information cannot be set up for remote SVN branches:
                     // http://git.661346.n2.nabble.com/git-svn-Use-prefix-by-default-td7594288.html#a7597159
@@ -92,8 +92,7 @@ namespace Svn2GitNet
                     if (Regex.IsMatch(status, @"(?m)Cannot setup tracking information"))
                     {
                         cannotSetupTrackingInformation = true;
-                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
-                        _commandRunner.Run(ci.Command, ci.Arguments);
+                        RunCommand(CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch));
                     }
                     else
                     {
@@ -104,8 +103,7 @@ namespace Svn2GitNet
 
                         legacySvnBranchTrackingMessageDisplayed = true;
 
-                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch);
-                        _commandRunner.Run(ci.Command, ci.Arguments);
+                        RunCommand(CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch));
                     }
                 }
             }
