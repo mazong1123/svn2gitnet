@@ -117,11 +117,11 @@ namespace Svn2GitNet
             string currentUserEmail = string.Empty;
             try
             {
-                _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
-                _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
-
                 if (_metaInfo.Tags != null)
                 {
+                    _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
+                    _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+
                     foreach (string t in _metaInfo.Tags)
                     {
                         string tag = t.Trim();

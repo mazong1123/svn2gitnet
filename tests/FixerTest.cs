@@ -394,5 +394,170 @@ namespace Svn2GitNet.Tests
         }
 
         #endregion
+
+        #region FixTags Tests
+
+        [Fact]
+        public void FixTagsWhenTagsIsNullTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                Tags = null
+            };
+
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+
+            // Act
+            fixer.FixTags();
+
+            // Assert
+            mock.Verify(f => f.Run("git", It.IsAny<string>()), Times.Never());
+        }
+
+        [Fact]
+        public void FixTagsHasOneTagTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = "subject1";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%s' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " date1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ci' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " author1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%an' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " test@email.com ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ae' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                Tags = new List<string>()
+                {
+                    "svn/tags/tag1"
+                }
+            };
+
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+
+            // Act
+            fixer.FixTags();
+
+            // Assert
+            mock.Verify(f => f.Run("git", $"tag -a -m \"subject1\" \"tag1\" \"svn/tags/tag1\""), Times.Once());
+            mock.Verify(f => f.Run("git", $"git branch -d -r \"svn/tags/tag1\""), Times.Once());
+        }
+
+        [Fact]
+        public void FixTagsHasOneTagRestoreTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = "subject1";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%s' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " date1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ci' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " author1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%an' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " test@email.com ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ae' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            string currentUserName = "userName1";
+            mock.Setup(f => f.Run("git", "config --get user.name", out currentUserName))
+                .Returns(0);
+
+            string currentUserEmail = "userEmail1@email.com";
+            mock.Setup(f => f.Run("git", "config --get user.email", out currentUserEmail))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                Tags = new List<string>()
+                {
+                    "svn/tags/tag1"
+                }
+            };
+
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null);
+
+            // Act
+            fixer.FixTags();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "config user.name \"userName1\""), Times.Once());
+            mock.Verify(f => f.Run("git", "config user.email \"userEmail1@email.com\""), Times.Once());
+        }
+
+        [Fact]
+        public void FixTagsHasOneTagUnsetTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = "subject1";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%s' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " date1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ci' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " author1 ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%an' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            standardOutput = " test@email.com ";
+            mock.Setup(f => f.Run("git", "log -1 --pretty=format:'%ae' \"svn/tags/tag1\"", out standardOutput))
+                .Returns(0);
+
+            string currentUserName = string.Empty;
+            mock.Setup(f => f.Run("git", "config --get user.name", out currentUserName))
+                .Returns(0);
+
+            string currentUserEmail = string.Empty;
+            mock.Setup(f => f.Run("git", "config --get user.email", out currentUserEmail))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                Tags = new List<string>()
+                {
+                    "svn/tags/tag1"
+                }
+            };
+
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null);
+
+            // Act
+            fixer.FixTags();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "config --unset user.name"), Times.Once());
+            mock.Verify(f => f.Run("git", "config --unset user.email"), Times.Once());
+        }
+
+        #endregion
     }
 }
