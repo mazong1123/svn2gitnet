@@ -31,7 +31,6 @@ namespace Svn2GitNet
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
-                    RedirectStandardInput = true,
                     FileName = cmd,
                     Arguments = arguments
                 }
@@ -51,23 +50,28 @@ namespace Svn2GitNet
                 tempError += e.Data;
             };
 
+            int exitCode = -1;
             try
             {
                 commandProcess.Start();
                 commandProcess.BeginOutputReadLine();
                 commandProcess.BeginErrorReadLine();
+                commandProcess.WaitForExit();
             }
             catch (Win32Exception)
             {
                 throw new MigrateException($"Command {cmd} does not exit. Did you install it or add it to the Environment path?");
             }
-
-            commandProcess.WaitForExit();
+            finally
+            {
+                exitCode = commandProcess.ExitCode;
+                commandProcess.Close();
+            }
 
             standardOutput = tempOutput;
             standardError = tempError;
 
-            return commandProcess.ExitCode;
+            return exitCode;
         }
 
         private void CommandProcessErrorDataReceived(object sender, DataReceivedEventArgs e)

@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Svn2GitNet
 {
@@ -25,6 +28,101 @@ namespace Svn2GitNet
                 LocalBranches = new List<string>(),
                 Tags = new List<string>()
             };
+        }
+
+        private int RunGitSvnInitCommand(string arguments)
+        {
+            Process commandProcess = new Process
+            {
+                StartInfo =
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true,
+                    FileName = "git",
+                    Arguments = arguments
+                }
+            };
+
+            /*string tempOutput = string.Empty;
+            commandProcess.OutputDataReceived += (s, e) =>
+            {
+                Console.Write(e.Data);
+                tempOutput += e.Data;
+            };
+
+            string tempError = string.Empty;
+            commandProcess.ErrorDataReceived += (s, e) =>
+            {
+                string errorData = e.Data;
+                Console.Write(errorData);
+                tempError += errorData;
+
+                if (errorData.Contains("Password for"))
+                {
+                    string inputPassword = Console.ReadLine();
+                    commandProcess.StartInfo.RedirectStandardInput = true;
+                    commandProcess.StandardInput.Write(inputPassword);
+                    commandProcess.StandardInput.Flush();
+                }
+            };*/
+
+            int exitCode = -1;
+            try
+            {
+                commandProcess.Start();
+
+                //commandProcess.BeginOutputReadLine();
+                //commandProcess.BeginErrorReadLine();
+                //string test = commandProcess.StandardError.ReadLine();
+                int lastChr = 0;
+
+                string output = "";
+                bool displayedPasswordFor = false;
+                do
+                {
+                    if (displayedPasswordFor && commandProcess.StandardError.Peek() == -1)
+                    {
+                        break;
+                    }
+
+                    lastChr = commandProcess.StandardError.Read();
+
+                    string outputChr = null;
+                    outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
+                    output += outputChr;
+
+                    if (!displayedPasswordFor && output.Contains("Password for"))
+                    {
+                        displayedPasswordFor = true;
+                    }
+
+                    Console.Write(outputChr);
+                } while (lastChr > 0);
+
+                if (output.Contains("Password for"))
+                {
+                    string inputPassword = Console.ReadLine();
+                    commandProcess.StartInfo.RedirectStandardInput = true;
+                    commandProcess.StandardInput.Write(inputPassword);
+                    commandProcess.StandardInput.Flush();
+                }
+
+                commandProcess.WaitForExit();
+            }
+            catch (Win32Exception)
+            {
+                throw new MigrateException($"Command git does not exit. Did you install it or add it to the Environment path?");
+            }
+            finally
+            {
+                exitCode = commandProcess.ExitCode;
+                commandProcess.Close();
+            }
+
+            return exitCode;
         }
 
         public void Clone()
@@ -100,7 +198,8 @@ namespace Svn2GitNet
                 arguments.Append(_svnUrl);
             }
 
-            if (_commandRunner.Run("git", arguments.ToString()) != 0)
+            //if (_commandRunner.Run("git", arguments.ToString()) != 0)
+            if (RunGitSvnInitCommand(arguments.ToString()) != 0)
             {
                 string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
                 throw new MigrateException(exceptionMessage);
