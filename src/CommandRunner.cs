@@ -48,6 +48,8 @@ namespace Svn2GitNet
             standardOutput = commandProcess.StandardOutput.ReadToEnd();
             standardError = commandProcess.StandardError.ReadToEnd();
 
+            commandProcess.WaitForExit();
+
             return commandProcess.ExitCode;
         }
     }

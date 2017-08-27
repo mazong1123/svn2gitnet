@@ -326,7 +326,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --username='userName' --password='password' --no-metadata --no-minimize-url --trunk='{_testSvnUrl}'";
+            string expectedArguments = $"svn init --prefix=svn/ --username=\"userName\" --password=\"password\" --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -351,7 +351,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-metadata --no-minimize-url --trunk='{_testSvnUrl}'";
+            string expectedArguments = $"svn init --prefix=svn/ --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -376,7 +376,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk='{_testSvnUrl}'";
+            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"{_testSvnUrl}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -401,7 +401,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk='{_testSvnUrl}'";
+            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"{_testSvnUrl}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -454,7 +454,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = false
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --trunk='subpath' {_testSvnUrl}";
+            string expectedArguments = $"svn init --prefix=svn/ --trunk=\"subpath\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
@@ -487,7 +487,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --trunk='subpath' --tags='tag1' --tags='tag2' {_testSvnUrl}";
+            string expectedArguments = $"svn init --prefix=svn/ --trunk=\"subpath\" --tags=\"tag1\" --tags=\"tag2\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
@@ -515,7 +515,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = false
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --trunk='subpath' --tags='tags' {_testSvnUrl}";
+            string expectedArguments = $"svn init --prefix=svn/ --trunk=\"subpath\" --tags=\"tags\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
@@ -543,7 +543,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = false
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --trunk='subpath' --branches='branches' {_testSvnUrl}";
+            string expectedArguments = $"svn init --prefix=svn/ --trunk=\"subpath\" --branches=\"branches\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
@@ -576,7 +576,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --trunk='subpath' --branches='branch1' --branches='branch2' {_testSvnUrl}";
+            string expectedArguments = $"svn init --prefix=svn/ --trunk=\"subpath\" --branches=\"branch1\" --branches=\"branch2\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
@@ -604,7 +604,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = false,
             };
 
-            string expectedExceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git svn init --prefix=svn/ --trunk='subpath' {_testSvnUrl}");
+            string expectedExceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git svn init --prefix=svn/ --trunk=\"subpath\" {_testSvnUrl}");
 
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(-1);
@@ -693,7 +693,8 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = @"svn fetch --ignore-paths='^(?:)(?:ex1|ex2)'";
+            string ignorePathsRegEx = @"^(?:)(?:ex1|ex2)";
+            string expectedArguments = $"svn fetch --ignore-paths=\"{ignorePathsRegEx}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -725,7 +726,8 @@ namespace Svn2GitNet.Tests
                 Revision = "123:456"
             };
 
-            string expectedArguments = @"svn fetch -r 123:456 --ignore-paths='^(?:)(?:ex1|ex2)'";
+            string ignorePathsRegEx = @"^(?:)(?:ex1|ex2)";
+            string expectedArguments = $"svn fetch -r 123:456 --ignore-paths=\"{ignorePathsRegEx}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -757,7 +759,8 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/])(?:ex1|ex2)'";
+            string ignorePathsRegEx = @"^(?:subpath[\/])(?:ex1|ex2)";
+            string expectedArguments = $"svn fetch --ignore-paths=\"{ignorePathsRegEx}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -794,7 +797,8 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/])(?:ex1|ex2)'";
+            string ignorePathsRegEx = @"^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/])(?:ex1|ex2)";
+            string expectedArguments = $"svn fetch --ignore-paths=\"{ignorePathsRegEx}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -836,7 +840,8 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/]|branch1[\/][^\/]+[\/]|branch2[\/][^\/]+[\/])(?:ex1|ex2)'";
+            string ignorePathsRegEx = @"^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/]|branch1[\/][^\/]+[\/]|branch2[\/][^\/]+[\/])(?:ex1|ex2)";
+            string expectedArguments = $"svn fetch --ignore-paths=\"{ignorePathsRegEx}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
