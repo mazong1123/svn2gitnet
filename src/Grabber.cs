@@ -131,14 +131,14 @@ namespace Svn2GitNet
                 {
                     if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
                     {
-                        regex.Add(_options.SubpathToTrunk + "[/]");
+                        regex.Add(_options.SubpathToTrunk + @"[\/]");
                     }
 
                     if (!_options.NoTags && tags.Count > 0)
                     {
                         foreach (var t in tags)
                         {
-                            regex.Add(t + "[/][^/]+[/]");
+                            regex.Add(t + @"[\/][^\/]+[\/]");
                         }
                     }
 
@@ -146,7 +146,7 @@ namespace Svn2GitNet
                     {
                         foreach (var b in branches)
                         {
-                            regex.Add(b + "[/][^/]+[/]");
+                            regex.Add(b + @"[\/][^\/]+[\/]");
                         }
                     }
                 }

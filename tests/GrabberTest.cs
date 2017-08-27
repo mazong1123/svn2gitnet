@@ -693,7 +693,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = "svn fetch --ignore-paths='^(?:)(?:ex1|ex2)'";
+            string expectedArguments = @"svn fetch --ignore-paths='^(?:)(?:ex1|ex2)'";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -725,7 +725,7 @@ namespace Svn2GitNet.Tests
                 Revision = "123:456"
             };
 
-            string expectedArguments = "svn fetch -r 123:456 --ignore-paths='^(?:)(?:ex1|ex2)'";
+            string expectedArguments = @"svn fetch -r 123:456 --ignore-paths='^(?:)(?:ex1|ex2)'";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -757,7 +757,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/])(?:ex1|ex2)'";
+            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/])(?:ex1|ex2)'";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -794,7 +794,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/]|tag1[/][^/]+[/]|tag2[/][^/]+[/])(?:ex1|ex2)'";
+            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/])(?:ex1|ex2)'";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -836,7 +836,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            string expectedArguments = "svn fetch --ignore-paths='^(?:subpath[/]|tag1[/][^/]+[/]|tag2[/][^/]+[/]|branch1[/][^/]+[/]|branch2[/][^/]+[/])(?:ex1|ex2)'";
+            string expectedArguments = @"svn fetch --ignore-paths='^(?:subpath[\/]|tag1[\/][^\/]+[\/]|tag2[\/][^\/]+[\/]|branch1[\/][^\/]+[\/]|branch2[\/][^\/]+[\/])(?:ex1|ex2)'";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 

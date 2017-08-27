@@ -14,7 +14,7 @@ namespace Svn2GitNet.Tests
 {
     public class FixerTest
     {
-        private string _testSvnUrl = "svn://testurl";
+        #region FixTrunk Tests
 
         [Fact]
         public void FixTrunkRemoteBranchIsNullTest()
@@ -123,6 +123,10 @@ namespace Svn2GitNet.Tests
             mock.Verify(f => f.Run("git", "checkout -f master"), Times.Never());
         }
 
+        #endregion
+
+        #region OptimizeRepos Tests
+
         [Fact]
         public void OptimizeReposSuccessTest()
         {
@@ -139,6 +143,10 @@ namespace Svn2GitNet.Tests
             // Assert
             mock.Verify(f => f.Run("git", "gc"), Times.Once());
         }
+
+        #endregion
+
+        #region FixBranches Tests
 
         [Fact]
         public void FixBranchesRebaseFailTest()
@@ -163,5 +171,228 @@ namespace Svn2GitNet.Tests
             Assert.IsType<MigrateException>(ex);
             Assert.Equal(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, "git svn fetch"), ex.Message);
         }
+
+        [Fact]
+        public void FixBranchesRebaseHasRemoteTrunkBranchSuccessTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "trunk1"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/trunk",
+                    "ddd"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = true
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "svn fetch"), Times.Once());
+            mock.Verify(f => f.Run("git", "checkout -f \"master\""), Times.Once());
+            mock.Verify(f => f.Run("git", "rebase \"remotes/svn/trunk\""), Times.Once());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseHasRemoteTrunkBranchSuccessTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "trunk1"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/trunk",
+                    "ddd"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "svn fetch"), Times.Never());
+            mock.Verify(f => f.Run("git", "checkout -f \"master\""), Times.Never());
+            mock.Verify(f => f.Run("git", "rebase \"remotes/svn/trunk\""), Times.Never());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseIsTrunkBranchTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "trunk1"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/trunk",
+                    "ddd"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "checkout \"trunk\""), Times.Never());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseIsLocalBranchTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "trunk1"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/trunk1",
+                    "ddd"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "checkout \"trunk\""), Times.Never());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseIsNotTrunkBranchTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = string.Empty;
+            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput));
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "nodev"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/dev"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "checkout \"dev\""), Times.Once());
+            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput), Times.Once());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseIsNotTrunkBranchTrackingWarningTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = "Hello. Cannot setup tracking information!";
+            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput));
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "nodev"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/dev",
+                    "svn/branch2"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "checkout -b \"dev\" \"remotes/svn/dev\""), Times.Once());
+            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput), Times.Once());
+        }
+
+        #endregion
     }
 }

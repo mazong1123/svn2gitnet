@@ -25,7 +25,15 @@ namespace Svn2GitNet
             List<string> svnBranches = new List<string>();
             if (_metaInfo.RemoteBranches != null)
             {
-                svnBranches = _metaInfo.RemoteBranches.Except(_metaInfo.Tags).ToList();
+                if (_metaInfo.Tags == null)
+                {
+                    svnBranches = _metaInfo.RemoteBranches.ToList();
+                }
+                else
+                {
+                    svnBranches = _metaInfo.RemoteBranches.Except(_metaInfo.Tags).ToList();
+                }
+
                 svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
             }
 
@@ -47,7 +55,7 @@ namespace Svn2GitNet
 
             foreach (var b in svnBranches)
             {
-                var branch = Regex.Replace(b, @"/^svn\//", "").Trim();
+                var branch = Regex.Replace(b, @"^svn\/", "").Trim();
                 bool isTrunkBranchOrIsLocalBranch = branch.Equals("trunk", StringComparison.InvariantCulture)
                                                     || localBranchSet.Contains(branch);
                 if (_options.Rebase && isTrunkBranchOrIsLocalBranch)
@@ -67,7 +75,7 @@ namespace Svn2GitNet
 
                 if (cannotSetupTrackingInformation)
                 {
-                    CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnBranchCommandInfo(branch);
+                    CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
                     _commandRunner.Run(ci.Command, ci.Arguments);
                 }
                 else
@@ -81,10 +89,10 @@ namespace Svn2GitNet
                     // Our --rebase option obviates the need for read-only tracked remotes, however.  So, we'll
                     // deprecate the old option, informing those relying on the old behavior that they should
                     // use the newer --rebase otion.
-                    if (Regex.IsMatch(status, @"/Cannot setup tracking information/m"))
+                    if (Regex.IsMatch(status, @"(?m)Cannot setup tracking information"))
                     {
                         cannotSetupTrackingInformation = true;
-                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnBranchCommandInfo(branch);
+                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
                         _commandRunner.Run(ci.Command, ci.Arguments);
                     }
                     else
@@ -96,7 +104,8 @@ namespace Svn2GitNet
 
                         legacySvnBranchTrackingMessageDisplayed = true;
 
-                        _commandRunner.Run("git", $"checkout \"{branch}\"");
+                        CommandInfo ci = CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch);
+                        _commandRunner.Run(ci.Command, ci.Arguments);
                     }
                 }
             }
