@@ -74,14 +74,72 @@ namespace Svn2GitNet
             return exitCode;
         }
 
-        private void CommandProcessErrorDataReceived(object sender, DataReceivedEventArgs e)
+        public int RunGitSvnInitCommand(string arguments)
         {
-            Console.WriteLine(e.Data);
-        }
+            Process commandProcess = new Process
+            {
+                StartInfo =
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true,
+                    FileName = "git",
+                    Arguments = arguments
+                }
+            };
 
-        private void CommandProcessOutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            Console.WriteLine(e.Data);
+            int exitCode = -1;
+            try
+            {
+                commandProcess.Start();
+
+                int lastChr = 0;
+
+                string output = "";
+                bool displayedPasswordFor = false;
+                do
+                {
+                    if (displayedPasswordFor && commandProcess.StandardError.Peek() == -1)
+                    {
+                        break;
+                    }
+
+                    lastChr = commandProcess.StandardError.Read();
+
+                    string outputChr = null;
+                    outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
+                    output += outputChr;
+
+                    if (!displayedPasswordFor && output.Contains("Password for"))
+                    {
+                        displayedPasswordFor = true;
+                    }
+
+                    Console.Write(outputChr);
+                } while (lastChr > 0);
+
+                if (output.Contains("Password for"))
+                {
+                    string inputPassword = Console.ReadLine();
+                    commandProcess.StandardInput.WriteLine(inputPassword);
+                    commandProcess.StandardInput.Flush();
+                }
+
+                commandProcess.WaitForExit();
+            }
+            catch (Win32Exception)
+            {
+                throw new MigrateException($"Command git does not exit. Did you install it or add it to the Environment path?");
+            }
+            finally
+            {
+                exitCode = commandProcess.ExitCode;
+                commandProcess.Close();
+            }
+
+            return exitCode;
         }
     }
 }
