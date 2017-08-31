@@ -227,12 +227,19 @@ namespace Svn2GitNet
             // '*' character used to indicate the currently selected branch.
             string parameter = isLocal ? "l" : "r";
             string branchInfo = RunCommandIgnoreExitCode("git", $"branch -{parameter} --no-color");
+            Log($"Branch info: {branchInfo}");
+
+            string splitter = Environment.NewLine;
+            if (!branchInfo.Contains(Environment.NewLine))
+            {
+                splitter = "  ";
+            }
 
             IEnumerable<string> branches = new List<string>();
             if (!string.IsNullOrWhiteSpace(branchInfo))
             {
                 branches = branchInfo
-                           .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
+                           .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
                            .Select(x => x.Replace("*", "").Trim());
             }
 
