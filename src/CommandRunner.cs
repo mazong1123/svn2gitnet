@@ -39,6 +39,11 @@ namespace Svn2GitNet
             string tempOutput = string.Empty;
             commandProcess.OutputDataReceived += (s, e) =>
             {
+                if (string.IsNullOrEmpty(e.Data))
+                {
+                    return;
+                }
+
                 Console.WriteLine(e.Data);
                 tempOutput += e.Data;
             };
@@ -46,6 +51,11 @@ namespace Svn2GitNet
             string tempError = string.Empty;
             commandProcess.ErrorDataReceived += (s, e) =>
             {
+                if (string.IsNullOrEmpty(e.Data))
+                {
+                    return;
+                }
+
                 Console.WriteLine(e.Data);
                 tempError += e.Data;
             };
