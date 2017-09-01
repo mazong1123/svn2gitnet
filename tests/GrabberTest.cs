@@ -666,6 +666,9 @@ namespace Svn2GitNet.Tests
 
             string expectedArguments = "config svn.authorsfile author1";
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>()))
+                .Returns(0);
+
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "config", null);

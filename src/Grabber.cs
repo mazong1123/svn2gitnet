@@ -229,19 +229,21 @@ namespace Svn2GitNet
             string branchInfo = RunCommandIgnoreExitCode("git", $"branch -{parameter} --no-color");
             Log($"Branch info: {branchInfo}");
 
+            IEnumerable<string> branches = new List<string>();
+            if (string.IsNullOrWhiteSpace(branchInfo))
+            {
+                return branches;
+            }
+
             string splitter = Environment.NewLine;
             if (!branchInfo.Contains(Environment.NewLine))
             {
                 splitter = "  ";
             }
 
-            IEnumerable<string> branches = new List<string>();
-            if (!string.IsNullOrWhiteSpace(branchInfo))
-            {
-                branches = branchInfo
-                           .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(x => x.Replace("*", "").Trim());
-            }
+            branches = branchInfo
+                       .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
+                       .Select(x => x.Replace("*", "").Trim());
 
             return branches;
         }

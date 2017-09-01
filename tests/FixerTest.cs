@@ -455,7 +455,7 @@ namespace Svn2GitNet.Tests
 
             // Assert
             mock.Verify(f => f.Run("git", $"tag -a -m \"subject1\" \"tag1\" \"svn/tags/tag1\""), Times.Once());
-            mock.Verify(f => f.Run("git", $"git branch -d -r \"svn/tags/tag1\""), Times.Once());
+            mock.Verify(f => f.Run("git", $"branch -d -r \"svn/tags/tag1\""), Times.Once());
         }
 
         [Fact]
