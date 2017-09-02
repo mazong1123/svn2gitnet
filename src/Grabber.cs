@@ -38,11 +38,6 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--username=\"{0}\" ", _options.UserName);
             }
 
-            if (!string.IsNullOrWhiteSpace(_options.Password))
-            {
-                arguments.AppendFormat("--password=\"{0}\" ", _options.Password);
-            }
-
             if (!_options.IncludeMetaData)
             {
                 arguments.Append("--no-metadata ");
@@ -106,7 +101,8 @@ namespace Svn2GitNet
                 arguments.Append(_svnUrl);
             }
 
-            if (_commandRunner.RunGitSvnInitCommand(arguments.ToString()) != 0)
+            Log($"Running command: git {arguments.ToString()}");
+            if (_commandRunner.RunGitSvnInitCommand(arguments.ToString(), _options.Password) != 0)
             {
                 string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
                 throw new MigrateException(exceptionMessage);

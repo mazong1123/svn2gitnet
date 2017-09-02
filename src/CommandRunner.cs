@@ -84,7 +84,7 @@ namespace Svn2GitNet
             return exitCode;
         }
 
-        public int RunGitSvnInitCommand(string arguments)
+        public int RunGitSvnInitCommand(string arguments, string password)
         {
             Process commandProcess = new Process
             {
@@ -105,37 +105,26 @@ namespace Svn2GitNet
             {
                 commandProcess.Start();
 
-                int lastChr = 0;
-
-                string output = "";
-                bool displayedPasswordFor = false;
+                OutputMessageType messageType = OutputMessageType.None;
                 do
                 {
-                    if (displayedPasswordFor && commandProcess.StandardError.Peek() == -1)
+                    messageType = ReadAndDisplayCommandProcessOutput(commandProcess);
+                    if (messageType == OutputMessageType.RequestInputPassword)
                     {
-                        break;
+                        if (string.IsNullOrEmpty(password))
+                        {
+                            password = Console.ReadLine();
+                        }
+
+                        commandProcess.StandardInput.WriteLine(password);
+                        commandProcess.StandardInput.Flush();
                     }
-
-                    lastChr = commandProcess.StandardError.Read();
-
-                    string outputChr = null;
-                    outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
-                    output += outputChr;
-
-                    if (!displayedPasswordFor && output.Contains("Password for"))
+                    else if (messageType == OutputMessageType.RequestAcceptCertificate)
                     {
-                        displayedPasswordFor = true;
+                        commandProcess.StandardInput.WriteLine("p");
+                        commandProcess.StandardInput.Flush();
                     }
-
-                    Console.Write(outputChr);
-                } while (lastChr > 0);
-
-                if (output.Contains("Password for"))
-                {
-                    string inputPassword = Console.ReadLine();
-                    commandProcess.StandardInput.WriteLine(inputPassword);
-                    commandProcess.StandardInput.Flush();
-                }
+                } while (messageType != OutputMessageType.None);
 
                 commandProcess.WaitForExit();
             }
@@ -150,6 +139,44 @@ namespace Svn2GitNet
             }
 
             return exitCode;
+        }
+
+        private OutputMessageType ReadAndDisplayCommandProcessOutput(Process commandProcess)
+        {
+            int lastChr = 0;
+
+            string output = "";
+            OutputMessageType messageType = OutputMessageType.None;
+
+            do
+            {
+                if (messageType != OutputMessageType.None && commandProcess.StandardError.Peek() == -1)
+                {
+                    break;
+                }
+
+                lastChr = commandProcess.StandardError.Read();
+
+                string outputChr = null;
+                outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
+                output += outputChr;
+
+                if (messageType == OutputMessageType.None)
+                {
+                    if (output.Contains("Password for"))
+                    {
+                        messageType = OutputMessageType.RequestInputPassword;
+                    }
+                    else if (output.Contains("(R)eject, accept (t)emporarily or accept (p)ermanently?"))
+                    {
+                        messageType = OutputMessageType.RequestAcceptCertificate;
+                    }
+                }
+
+                Console.Write(outputChr);
+            } while (lastChr > 0);
+
+            return messageType;
         }
     }
 }
