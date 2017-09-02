@@ -118,8 +118,13 @@ namespace Svn2GitNet
                 if (_metaInfo.Tags != null)
                 {
                     Log("Reading user.name and user.email...");
+
+                    Log($"Running command: git {_gitConfigCommandArguments} --get user.name");
                     _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
+
+                    Log($"Running command: git {_gitConfigCommandArguments} --get user.email");
                     _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+
                     Log($"user.name: {currentUserName}");
                     Log($"user.email: {currentUserEmail}");
 
