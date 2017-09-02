@@ -32,6 +32,7 @@ namespace Svn2GitNet
 
         public void Clone()
         {
+            Log("Start cloning...");
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
             if (!string.IsNullOrWhiteSpace(_options.UserName))
             {
@@ -110,9 +111,10 @@ namespace Svn2GitNet
 
             if (!string.IsNullOrWhiteSpace(_options.Authors))
             {
-                _commandRunner.Run("git",
-                            string.Format("{0} svn.authorsfile {1}",
-                            _gitConfigCommandArguments, _options.Authors));
+                string args = string.Format("{0} svn.authorsfile {1}",
+                            _gitConfigCommandArguments, _options.Authors);
+                Log($"Running command: git {args}");
+                _commandRunner.Run("git", args);
             }
 
             arguments = new StringBuilder("svn fetch ");
@@ -157,21 +159,28 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--ignore-paths=\"{0}\" ", regexStr);
             }
 
+            Log($"Running command: git {arguments.ToString()}");
             if (_commandRunner.Run("git", arguments.ToString().Trim()) != 0)
             {
                 throw new MigrateException($"Fail to execute command \"git {arguments.ToString()}\". Run with -v or --verbose for details.");
             }
 
             FetchBranches();
+
+            Log("End clone.");
         }
 
         public void FetchBranches()
         {
+            Log("Start fetching branches...");
             _metaInfo.LocalBranches = FetchBranchesWorker(true);
             _metaInfo.RemoteBranches = FetchBranchesWorker(false);
+            Log("End fetch branches.");
 
             // Tags are remote branches that start with "tags/".
+            Log("Start retrieving tags...");
             _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"^svn\/tags\/"));
+            Log("End retrieve tags...");
         }
 
         public void FetchRebaseBraches()
@@ -228,6 +237,7 @@ namespace Svn2GitNet
             IEnumerable<string> branches = new List<string>();
             if (string.IsNullOrWhiteSpace(branchInfo))
             {
+                Log("No branch found.");
                 return branches;
             }
 
@@ -235,6 +245,7 @@ namespace Svn2GitNet
             if (!branchInfo.Contains(Environment.NewLine))
             {
                 splitter = "  ";
+                Log("Branches are not splitted by new liner. Use '  ' as splitter.");
             }
 
             branches = branchInfo
