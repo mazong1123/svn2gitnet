@@ -326,9 +326,12 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --username=\"userName\" --password=\"password\" --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
+            string expectedArguments = $"svn init --prefix=svn/ --username=\"userName\" --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
+
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
 
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
@@ -336,7 +339,7 @@ namespace Svn2GitNet.Tests
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -355,13 +358,16 @@ namespace Svn2GitNet.Tests
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -380,13 +386,16 @@ namespace Svn2GitNet.Tests
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -405,13 +414,16 @@ namespace Svn2GitNet.Tests
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -431,13 +443,16 @@ namespace Svn2GitNet.Tests
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -459,13 +474,16 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -492,13 +510,16 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -520,13 +541,16 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -548,13 +572,16 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -581,13 +608,16 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
+
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
 
             // Act
             grabber.Clone();
 
             // Assert
-            mock.Verify(f => f.Run("git", expectedArguments), Times.Once());
+            mock.Verify(f => f.RunGitSvnInitCommand(expectedArguments, options.Password), Times.Once());
         }
 
         [Fact]
@@ -606,7 +636,7 @@ namespace Svn2GitNet.Tests
 
             string expectedExceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git svn init --prefix=svn/ --trunk=\"subpath\" {_testSvnUrl}");
 
-            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
                 .Returns(-1);
 
             IGrabber grabber = new Grabber(_testSvnUrl, options, mock.Object, "", null);
@@ -635,6 +665,9 @@ namespace Svn2GitNet.Tests
             };
 
             string expectedArguments = "config svn.authorsfile author1";
+
+            mock.Setup(f => f.RunGitSvnInitCommand(It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(0);
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 

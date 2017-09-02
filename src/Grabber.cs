@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace Svn2GitNet
 {
@@ -35,11 +38,6 @@ namespace Svn2GitNet
                 arguments.AppendFormat("--username=\"{0}\" ", _options.UserName);
             }
 
-            if (!string.IsNullOrWhiteSpace(_options.Password))
-            {
-                arguments.AppendFormat("--password=\"{0}\" ", _options.Password);
-            }
-
             if (!_options.IncludeMetaData)
             {
                 arguments.Append("--no-metadata ");
@@ -49,6 +47,9 @@ namespace Svn2GitNet
             {
                 arguments.Append("--no-minimize-url ");
             }
+
+            // Prevent cache user auth.
+            //arguments.Append("--no-auth-cache ");
 
             var branches = _options.Branches == null ? new List<string>() : new List<string>(_options.Branches);
             var tags = _options.Tags == null ? new List<string>() : new List<string>(_options.Tags);
@@ -100,7 +101,8 @@ namespace Svn2GitNet
                 arguments.Append(_svnUrl);
             }
 
-            if (_commandRunner.Run("git", arguments.ToString()) != 0)
+            Log($"Running command: git {arguments.ToString()}");
+            if (_commandRunner.RunGitSvnInitCommand(arguments.ToString(), _options.Password) != 0)
             {
                 string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
                 throw new MigrateException(exceptionMessage);
@@ -221,14 +223,23 @@ namespace Svn2GitNet
             // '*' character used to indicate the currently selected branch.
             string parameter = isLocal ? "l" : "r";
             string branchInfo = RunCommandIgnoreExitCode("git", $"branch -{parameter} --no-color");
+            Log($"Branch info: {branchInfo}");
 
             IEnumerable<string> branches = new List<string>();
-            if (!string.IsNullOrWhiteSpace(branchInfo))
+            if (string.IsNullOrWhiteSpace(branchInfo))
             {
-                branches = branchInfo
-                           .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)
-                           .Select(x => x.Replace("*", "").Trim());
+                return branches;
             }
+
+            string splitter = Environment.NewLine;
+            if (!branchInfo.Contains(Environment.NewLine))
+            {
+                splitter = "  ";
+            }
+
+            branches = branchInfo
+                       .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
+                       .Select(x => x.Replace("*", "").Trim());
 
             return branches;
         }

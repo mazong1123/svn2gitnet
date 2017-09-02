@@ -36,21 +36,147 @@ namespace Svn2GitNet
                 }
             };
 
+            string tempOutput = string.Empty;
+            commandProcess.OutputDataReceived += (s, e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data))
+                {
+                    return;
+                }
+
+                Console.WriteLine(e.Data);
+                tempOutput += e.Data;
+            };
+
+            string tempError = string.Empty;
+            commandProcess.ErrorDataReceived += (s, e) =>
+            {
+                if (string.IsNullOrEmpty(e.Data))
+                {
+                    return;
+                }
+
+                Console.WriteLine(e.Data);
+                tempError += e.Data;
+            };
+
+            int exitCode = -1;
             try
             {
                 commandProcess.Start();
+                commandProcess.BeginOutputReadLine();
+                commandProcess.BeginErrorReadLine();
+                commandProcess.WaitForExit();
             }
             catch (Win32Exception)
             {
                 throw new MigrateException($"Command {cmd} does not exit. Did you install it or add it to the Environment path?");
             }
+            finally
+            {
+                exitCode = commandProcess.ExitCode;
+                commandProcess.Close();
+            }
 
-            standardOutput = commandProcess.StandardOutput.ReadToEnd();
-            standardError = commandProcess.StandardError.ReadToEnd();
+            standardOutput = tempOutput;
+            standardError = tempError;
 
-            commandProcess.WaitForExit();
+            return exitCode;
+        }
 
-            return commandProcess.ExitCode;
+        public int RunGitSvnInitCommand(string arguments, string password)
+        {
+            Process commandProcess = new Process
+            {
+                StartInfo =
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    RedirectStandardInput = true,
+                    FileName = "git",
+                    Arguments = arguments
+                }
+            };
+
+            int exitCode = -1;
+            try
+            {
+                commandProcess.Start();
+
+                OutputMessageType messageType = OutputMessageType.None;
+                do
+                {
+                    messageType = ReadAndDisplayCommandProcessOutput(commandProcess);
+                    if (messageType == OutputMessageType.RequestInputPassword)
+                    {
+                        if (string.IsNullOrEmpty(password))
+                        {
+                            password = Console.ReadLine();
+                        }
+
+                        commandProcess.StandardInput.WriteLine(password);
+                        commandProcess.StandardInput.Flush();
+                    }
+                    else if (messageType == OutputMessageType.RequestAcceptCertificate)
+                    {
+                        commandProcess.StandardInput.WriteLine("p");
+                        commandProcess.StandardInput.Flush();
+                    }
+                } while (messageType != OutputMessageType.None);
+
+                commandProcess.WaitForExit();
+            }
+            catch (Win32Exception)
+            {
+                throw new MigrateException($"Command git does not exit. Did you install it or add it to the Environment path?");
+            }
+            finally
+            {
+                exitCode = commandProcess.ExitCode;
+                commandProcess.Close();
+            }
+
+            return exitCode;
+        }
+
+        private OutputMessageType ReadAndDisplayCommandProcessOutput(Process commandProcess)
+        {
+            int lastChr = 0;
+
+            string output = "";
+            OutputMessageType messageType = OutputMessageType.None;
+
+            do
+            {
+                if (messageType != OutputMessageType.None && commandProcess.StandardError.Peek() == -1)
+                {
+                    break;
+                }
+
+                lastChr = commandProcess.StandardError.Read();
+
+                string outputChr = null;
+                outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
+                output += outputChr;
+
+                if (messageType == OutputMessageType.None)
+                {
+                    if (output.Contains("Password for"))
+                    {
+                        messageType = OutputMessageType.RequestInputPassword;
+                    }
+                    else if (output.Contains("(R)eject, accept (t)emporarily or accept (p)ermanently?"))
+                    {
+                        messageType = OutputMessageType.RequestAcceptCertificate;
+                    }
+                }
+
+                Console.Write(outputChr);
+            } while (lastChr > 0);
+
+            return messageType;
         }
     }
 }

@@ -9,5 +9,7 @@ namespace Svn2GitNet
         int Run(string cmd, string arguments, out string standardOutput);
 
         int Run(string cmd, string arguments, out string standardOutput, out string standardError);
+
+        int RunGitSvnInitCommand(string arguments, string password);
     }
 }

@@ -117,15 +117,23 @@ namespace Svn2GitNet
             {
                 if (_metaInfo.Tags != null)
                 {
+                    Log("Reading user.name and user.email...");
                     _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
                     _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+                    Log($"user.name: {currentUserName}");
+                    Log($"user.email: {currentUserEmail}");
 
                     foreach (string t in _metaInfo.Tags)
                     {
                         string tag = t.Trim();
+                        Log($"Processing tag: {tag}");
+
                         string id = Regex.Replace(tag, @"^svn\/tags\/", "").Trim();
+                        Log($"id: {id}");
 
                         string quotesFreeTag = Utils.EscapeQuotes(tag);
+                        Log($"quotes free tag: {tag}");
+
                         string subject = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%s' \"{quotesFreeTag}\""), '\'');
                         string date = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ci' \"{quotesFreeTag}\""), '\'');
                         string author = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%an' \"{quotesFreeTag}\""), '\'');
@@ -140,7 +148,7 @@ namespace Svn2GitNet
                         _commandRunner.Run("git", $"tag -a -m \"{Utils.EscapeQuotes(subject)}\" \"{Utils.EscapeQuotes(id)}\" \"{quotesFreeTag}\"");
                         Environment.SetEnvironmentVariable("GIT_COMMITTER_DATE", originalGitCommitterDate);
 
-                        _commandRunner.Run("git", $"git branch -d -r \"{quotesFreeTag}\"");
+                        _commandRunner.Run("git", $"branch -d -r \"{quotesFreeTag}\"");
                     }
                 }
             }
