@@ -34,6 +34,7 @@ namespace Svn2GitNet
         {
             Log("Start cloning...");
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
+
             if (!string.IsNullOrWhiteSpace(_options.UserName))
             {
                 arguments.AppendFormat("--username=\"{0}\" ", _options.UserName);
@@ -48,9 +49,6 @@ namespace Svn2GitNet
             {
                 arguments.Append("--no-minimize-url ");
             }
-
-            // Prevent cache user auth.
-            //arguments.Append("--no-auth-cache ");
 
             var branches = _options.Branches == null ? new List<string>() : new List<string>(_options.Branches);
             var tags = _options.Tags == null ? new List<string>() : new List<string>(_options.Tags);
@@ -103,7 +101,7 @@ namespace Svn2GitNet
             }
 
             Log($"Running command: git {arguments.ToString()}");
-            if (_commandRunner.RunGitSvnInitCommand(arguments.ToString(), _options.Password) != 0)
+            if (_commandRunner.RunGitSvnInteractiveCommand(arguments.ToString(), _options.Password) != 0)
             {
                 string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
                 throw new MigrateException(exceptionMessage);

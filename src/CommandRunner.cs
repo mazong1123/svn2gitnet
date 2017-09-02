@@ -84,7 +84,7 @@ namespace Svn2GitNet
             return exitCode;
         }
 
-        public int RunGitSvnInitCommand(string arguments, string password)
+        public int RunGitSvnInteractiveCommand(string arguments, string password)
         {
             Process commandProcess = new Process
             {
@@ -117,13 +117,19 @@ namespace Svn2GitNet
                         }
 
                         commandProcess.StandardInput.WriteLine(password);
-                        commandProcess.StandardInput.Flush();
                     }
-                    else if (messageType == OutputMessageType.RequestAcceptCertificate)
+                    else if (messageType == OutputMessageType.RequestAcceptCertificateFullOptions)
                     {
+                        Console.WriteLine("p");
                         commandProcess.StandardInput.WriteLine("p");
-                        commandProcess.StandardInput.Flush();
                     }
+                    else if (messageType == OutputMessageType.RequestAcceptCertificateNoPermanentOption)
+                    {
+                        Console.WriteLine("t");
+                        commandProcess.StandardInput.WriteLine("t");
+                    }
+
+                    commandProcess.StandardInput.Flush();
                 } while (messageType != OutputMessageType.None);
 
                 commandProcess.WaitForExit();
@@ -169,7 +175,11 @@ namespace Svn2GitNet
                     }
                     else if (output.Contains("(R)eject, accept (t)emporarily or accept (p)ermanently?"))
                     {
-                        messageType = OutputMessageType.RequestAcceptCertificate;
+                        messageType = OutputMessageType.RequestAcceptCertificateFullOptions;
+                    }
+                    else if (output.Contains("(R)eject or accept (t)emporarily?"))
+                    {
+                        messageType = OutputMessageType.RequestAcceptCertificateNoPermanentOption;
                     }
                 }
 

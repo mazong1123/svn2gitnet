@@ -7,7 +7,8 @@ namespace Svn2GitNet
     public enum OutputMessageType
     {
         None,
-        RequestAcceptCertificate,
+        RequestAcceptCertificateFullOptions,
+        RequestAcceptCertificateNoPermanentOption,
         RequestInputPassword
     }
 }
