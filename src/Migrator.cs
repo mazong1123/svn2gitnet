@@ -12,6 +12,7 @@ namespace Svn2GitNet
     {
         // TODO: Add windows support.
         private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
+        private readonly string GIT_SVN_CACHE_DIRECTORY = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".subversion", "auth");
 
         private ICommandRunner _commandRunner;
         private IMessageDisplayer _messageDisplayer;
@@ -92,23 +93,32 @@ namespace Svn2GitNet
                 throw new ArgumentNullException("fixer");
             }
 
-            if (_options.Rebase)
+            try
             {
-                grabber.FetchBranches();
-            }
-            else if (!string.IsNullOrWhiteSpace(_options.RebaseBranch))
-            {
-                grabber.FetchRebaseBraches();
-            }
-            else
-            {
-                grabber.Clone();
-            }
+                PreRunPrepare();
 
-            fixer.FixBranches();
-            fixer.FixTags();
-            fixer.FixTrunk();
-            fixer.OptimizeRepos();
+                if (_options.Rebase)
+                {
+                    grabber.FetchBranches();
+                }
+                else if (!string.IsNullOrWhiteSpace(_options.RebaseBranch))
+                {
+                    grabber.FetchRebaseBraches();
+                }
+                else
+                {
+                    grabber.Clone();
+                }
+
+                fixer.FixBranches();
+                fixer.FixTags();
+                fixer.FixTrunk();
+                fixer.OptimizeRepos();
+            }
+            finally
+            {
+                PostRunCleanup();
+            }
         }
 
         private string GitConfigCommandArguments
@@ -153,6 +163,94 @@ namespace Svn2GitNet
             }
 
             return string.Empty;
+        }
+
+        private void PreRunPrepare()
+        {
+            try
+            {
+                string svnSimpleFolder = Path.Combine(GIT_SVN_CACHE_DIRECTORY, "svn.simple");
+                if (!Directory.Exists(svnSimpleFolder))
+                {
+                    return;
+                }
+
+                var cacheFiles = Directory.GetFiles(svnSimpleFolder);
+                if (cacheFiles.Length > 0)
+                {
+                    Console.WriteLine("Temporarily disabling the cached credentials...");
+                    foreach (var cf in cacheFiles)
+                    {
+                        if (string.IsNullOrEmpty(Path.GetExtension(cf)))
+                        {
+                            string newFileName = cf + ".svn2gitnet";
+                            if (File.Exists(newFileName))
+                            {
+                                File.Delete(newFileName);
+                            }
+
+                            File.Move(cf, newFileName);
+                        }
+                    }
+                    Console.WriteLine("The cached credentials are disabled.");
+                }
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Failed to disable the cached credentials. We'll use the cached credentials for further actions.");
+                Log(ex.ToString());
+            }
+        }
+
+        private void PostRunCleanup()
+        {
+            try
+            {
+                string svnSimpleFolder = Path.Combine(GIT_SVN_CACHE_DIRECTORY, "svn.simple");
+                if (!Directory.Exists(svnSimpleFolder))
+                {
+                    return;
+                }
+
+                var cacheFiles = Directory.GetFiles(svnSimpleFolder);
+                if (cacheFiles.Length > 0)
+                {
+                    Console.WriteLine("Recoverying cached credentials...");
+                    foreach (var cf in cacheFiles)
+                    {
+                        if (string.IsNullOrEmpty(Path.GetExtension(cf)))
+                        {
+                            continue;
+                        }
+
+                        var fileNameWithoutExt = Path.GetFileNameWithoutExtension(cf);
+                        if (!File.Exists(fileNameWithoutExt))
+                        {
+                            File.Move(cf, fileNameWithoutExt);
+                        }
+                        else
+                        {
+                            // A new cache file with the same hash generated.
+                            // No need to recover the old one.
+                            File.Delete(cf);
+                        }
+                    }
+                    Console.WriteLine("Cached credentials recovered");
+                }
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine("Failed to recover the cached credentials.");
+                Log(ex.ToString());
+            }
+        }
+
+        private void Log(string message)
+        {
+            if (_options.IsVerbose)
+            {
+                Console.WriteLine(message);
+            }
         }
     }
 }
