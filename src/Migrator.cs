@@ -224,9 +224,10 @@ namespace Svn2GitNet
                         }
 
                         var fileNameWithoutExt = Path.GetFileNameWithoutExtension(cf);
-                        if (!File.Exists(fileNameWithoutExt))
+                        var cacheFilePath = Path.Combine(svnSimpleFolder, fileNameWithoutExt);
+                        if (!File.Exists(cacheFilePath))
                         {
-                            File.Move(cf, fileNameWithoutExt);
+                            File.Move(cf, cacheFilePath);
                         }
                         else
                         {

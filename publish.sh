@@ -1,3 +1,7 @@
+#!/bin/bash
+
+set -e
+
 cd src
 dotnet restore
 dotnet publish --self-contained -c Release -r ubuntu.16.04-x64
