@@ -178,6 +178,14 @@ namespace Svn2GitNet
             // Tags are remote branches that start with "tags/".
             Log("Start retrieving tags...");
             _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"^svn\/tags\/"));
+            if (_options.IsVerbose)
+            {
+                Log($"We have {_metaInfo.Tags.Count()} tags:");
+                foreach (var t in _metaInfo.Tags)
+                {
+                    Log(t);
+                }
+            }
             Log("End retrieve tags...");
         }
 
@@ -229,8 +237,10 @@ namespace Svn2GitNet
             // Get the list of local and remote branches, taking care to ignore console color codes and ignoring the
             // '*' character used to indicate the currently selected branch.
             string parameter = isLocal ? "l" : "r";
-            string branchInfo = RunCommandIgnoreExitCode("git", $"branch -{parameter} --no-color");
-            Log($"Branch info: {branchInfo}");
+
+            string args = $"branch -{parameter} --no-color";
+            Log($"Running command: git {args}");
+            string branchInfo = RunCommandIgnoreExitCode("git", args);
 
             IEnumerable<string> branches = new List<string>();
             if (string.IsNullOrWhiteSpace(branchInfo))
@@ -239,8 +249,8 @@ namespace Svn2GitNet
                 return branches;
             }
 
-            string splitter = Environment.NewLine;
-            if (!branchInfo.Contains(Environment.NewLine))
+            string splitter = "\n";
+            if (!branchInfo.Contains(splitter))
             {
                 splitter = "  ";
                 Log("Branches are not splitted by new liner. Use '  ' as splitter.");
@@ -249,6 +259,17 @@ namespace Svn2GitNet
             branches = branchInfo
                        .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
                        .Select(x => x.Replace("*", "").Trim());
+
+            if (_options.IsVerbose)
+            {
+                Log($"Fechted {branches.Count()} branches ({parameter}):");
+                foreach (var b in branches)
+                {
+                    Log(b);
+                }
+            }
+
+            Log("End of FetchBranchesWorker");
 
             return branches;
         }

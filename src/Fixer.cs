@@ -22,6 +22,7 @@ namespace Svn2GitNet
 
         public void FixBranches()
         {
+            Log("Start fixing branches...");
             List<string> svnBranches = new List<string>();
             if (_metaInfo.RemoteBranches != null)
             {
@@ -37,9 +38,21 @@ namespace Svn2GitNet
                 svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
             }
 
+            if (_options.IsVerbose)
+            {
+                Log("To fix branches include:");
+                foreach (var b in svnBranches)
+                {
+                    Log(b);
+                }
+            }
+
             if (_options.Rebase)
             {
+                Log("Rebasing...");
                 CommandInfo cmdInfo = CommandInfoBuilder.BuildGitSvnFetchCommandInfo();
+
+                Log($"Running command {cmdInfo.Command} {cmdInfo.Arguments}");
                 int exitCode = RunCommand(cmdInfo);
                 if (exitCode != 0)
                 {
@@ -57,12 +70,17 @@ namespace Svn2GitNet
             {
                 var branch = Regex.Replace(b, @"^svn\/", "").Trim();
                 bool isTrunkBranchOrIsLocalBranch = branch.Equals("trunk", StringComparison.InvariantCulture)
-                                                    || localBranchSet.Contains(branch);
+                                                    || localBranchSet.Contains(b);
                 if (_options.Rebase && isTrunkBranchOrIsLocalBranch)
                 {
                     string localBranch = branch == "trunk" ? "master" : branch;
+                    CommandInfo forceCheckoutLocalBranchCommandInfo = CommandInfoBuilder.BuildForceCheckoutLocalBranchCommandInfo(localBranch);
+                    CommandInfo rebaseRemoteBranchCommandInfo = CommandInfoBuilder.BuildGitRebaseRemoteSvnBranchCommandInfo(branch);
 
+                    Log($"Running command: {forceCheckoutLocalBranchCommandInfo.Command} {forceCheckoutLocalBranchCommandInfo.Arguments}");
                     RunCommand(CommandInfoBuilder.BuildForceCheckoutLocalBranchCommandInfo(localBranch));
+
+                    Log($"Running command: {rebaseRemoteBranchCommandInfo.Command} {rebaseRemoteBranchCommandInfo.Arguments}");
                     RunCommand(CommandInfoBuilder.BuildGitRebaseRemoteSvnBranchCommandInfo(branch));
 
                     continue;
@@ -70,6 +88,7 @@ namespace Svn2GitNet
 
                 if (isTrunkBranchOrIsLocalBranch)
                 {
+                    Log($"{branch} is trunk branch or local branch, skip.");
                     continue;
                 }
 
@@ -80,7 +99,13 @@ namespace Svn2GitNet
                 }
                 else
                 {
-                    string status = RunCommandIgnoreExitCode(CommandInfoBuilder.BuildGitBranchTrackCommandInfo(branch));
+                    CommandInfo trackCommandInfo = CommandInfoBuilder.BuildGitBranchTrackCommandInfo(branch);
+
+                    Log($"Running command: {trackCommandInfo.Command} {trackCommandInfo.Arguments}");
+                    //string status = RunCommandIgnoreExitCode(trackCommandInfo);
+                    string trackCommandError = string.Empty;
+                    string dummyOutput = string.Empty;
+                    RunCommand(trackCommandInfo, out dummyOutput, out trackCommandError);
 
                     // As of git 1.8.3.2, tracking information cannot be set up for remote SVN branches:
                     // http://git.661346.n2.nabble.com/git-svn-Use-prefix-by-default-td7594288.html#a7597159
@@ -88,11 +113,17 @@ namespace Svn2GitNet
                     // Older versions of git can do it and it should be safe as long as remotes aren't pushed.
                     // Our --rebase option obviates the need for read-only tracked remotes, however.  So, we'll
                     // deprecate the old option, informing those relying on the old behavior that they should
-                    // use the newer --rebase otion.
-                    if (Regex.IsMatch(status, @"(?m)Cannot setup tracking information"))
+                    // use the newer --rebase option.
+                    Log($"trackCommandError: {trackCommandError}");
+                    if (Regex.IsMatch(trackCommandError, @"(?m)Cannot setup tracking information"))
                     {
+                        Log("Has tracking error.");
                         cannotSetupTrackingInformation = true;
-                        RunCommand(CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch));
+
+                        CommandInfo checkoutRemoteBranchCommandInfo = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
+
+                        Log($"Running command: {checkoutRemoteBranchCommandInfo.Command} {checkoutRemoteBranchCommandInfo.Arguments}");
+                        RunCommand(checkoutRemoteBranchCommandInfo);
                     }
                     else
                     {
@@ -103,10 +134,15 @@ namespace Svn2GitNet
 
                         legacySvnBranchTrackingMessageDisplayed = true;
 
-                        RunCommand(CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch));
+                        CommandInfo checkoutLocalBranchCommandInfo = CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch);
+
+                        Log($"Running command: {checkoutLocalBranchCommandInfo.Command} {checkoutLocalBranchCommandInfo.Arguments}");
+                        RunCommand(checkoutLocalBranchCommandInfo);
                     }
                 }
             }
+
+            Log("End fixing branches.");
         }
 
         public void FixTags()
@@ -218,9 +254,9 @@ namespace Svn2GitNet
             }
             message.AppendLine();
 
-            message.AppendLine("svn2git warning: Tracking remote SVN branches is deprecated.");
+            message.AppendLine("svn2gitnet warning: Tracking remote SVN branches is deprecated.");
             message.AppendLine("In a future release local branches will be created without tracking.");
-            message.AppendLine("If you must resync your branches, run: svn2git --rebase");
+            message.AppendLine("If you must resync your branches, run: svn2gitnet --rebase");
 
             for (int i = 0; i < 68; ++i)
             {
