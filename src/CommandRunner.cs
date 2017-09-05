@@ -154,15 +154,9 @@ namespace Svn2GitNet
             string output = "";
             OutputMessageType messageType = OutputMessageType.None;
 
-            do
+            while ((messageType == OutputMessageType.None || commandProcess.StandardError.Peek() != -1)
+                    && (lastChr = commandProcess.StandardError.Read()) > 0)
             {
-                if (messageType != OutputMessageType.None && commandProcess.StandardError.Peek() == -1)
-                {
-                    break;
-                }
-
-                lastChr = commandProcess.StandardError.Read();
-
                 string outputChr = null;
                 outputChr += commandProcess.StandardError.CurrentEncoding.GetString(new byte[] { (byte)lastChr });
                 output += outputChr;
@@ -184,7 +178,7 @@ namespace Svn2GitNet
                 }
 
                 Console.Write(outputChr);
-            } while (lastChr > 0);
+            }
 
             return messageType;
         }
