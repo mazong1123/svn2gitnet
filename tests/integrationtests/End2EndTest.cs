@@ -32,7 +32,7 @@ namespace Svn2GitNet.Tests
             string userName = Environment.GetEnvironmentVariable("SVN2GITNET_PRIVATE_REPO_USER_NAME");
             string password = Environment.GetEnvironmentVariable("SVN2GITNET_PRIVATE_REPO_PASSWORD");
 
-            int exitCode = RunSvn2GitNet($"{svnUrl} --username {userName} --password {password} -v", "PrivateRepoSmokeTest");
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{svnUrl} --username {userName} --password {password} -v", "PrivateRepoSmokeTest"));
 
             Assert.Equal(0, exitCode);
         }
@@ -40,12 +40,50 @@ namespace Svn2GitNet.Tests
         [Fact]
         public void PublicClassicLayoutRepositoryEnd2EndSmokeTest()
         {
-            int exitCode = RunSvn2GitNet($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", "PublicRepoSmokeTest");
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", "PublicRepoSmokeTest"));
 
             Assert.Equal(0, exitCode);
         }
 
-        private int RunSvn2GitNet(string arguments, string subWorkingFolder = "")
+        [Fact]
+        public void PublicClassicLayoutRepositoryEnd2EndBranchTest()
+        {
+            string subWorkingFolder = "PublicRepoBranchTest";
+            string expectedBranchInfo = "  dev  dev@1* master";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", "PublicRepoBranchTest"));
+
+            Assert.Equal(0, exitCode);
+
+            ICommandRunner commandRunner = new CommandRunner();
+
+            string actualBranchInfo = string.Empty;
+            string dummyError = string.Empty;
+            commandRunner.Run("git", "branch", out actualBranchInfo, out dummyError, Path.Combine(GetIntegrationTestsTempFolderPath(), subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(expectedBranchInfo, actualBranchInfo);
+        }
+
+        [Fact]
+        public void PublicClassicLayoutRepositoryEnd2EndTagTest()
+        {
+            string subWorkingFolder = "PublicRepoTagTest";
+            string expectedTagInfo = "1.0.01.0.0@2";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+
+            ICommandRunner commandRunner = new CommandRunner();
+
+            string actualTagInfo = string.Empty;
+            string dummyError = string.Empty;
+            exitCode = commandRunner.Run("git", "tag", out actualTagInfo, out dummyError, Path.Combine(GetIntegrationTestsTempFolderPath(), subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(expectedTagInfo, actualTagInfo);
+        }
+
+        private ProcessStartInfo BuildSvn2GitNetProcessStartInfo(string arguments, string subWorkingFolder = "")
         {
             string platformSepcifier = GetPlatformSpecifier();
             string testTempFolderPath = GetIntegrationTestsTempFolderPath();
@@ -58,16 +96,21 @@ namespace Svn2GitNet.Tests
                 Directory.CreateDirectory(workingdirectory);
             }
 
-            Process commandProcess = new Process
+            return new ProcessStartInfo()
             {
-                StartInfo =
-                {
-                    CreateNoWindow = true,
-                    UseShellExecute = false,
-                    FileName = binaryPath,
-                    Arguments = arguments,
-                    WorkingDirectory = workingdirectory
-                }
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                FileName = binaryPath,
+                Arguments = arguments,
+                WorkingDirectory = workingdirectory
+            };
+        }
+
+        private int RunCommand(ProcessStartInfo startInfo)
+        {
+            Process commandProcess = new Process()
+            {
+                StartInfo = startInfo
             };
 
             commandProcess.Start();

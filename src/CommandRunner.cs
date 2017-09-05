@@ -23,6 +23,11 @@ namespace Svn2GitNet
 
         public int Run(string cmd, string arguments, out string standardOutput, out string standardError)
         {
+            return Run(cmd, arguments, out standardOutput, out standardError, null);
+        }
+
+        public int Run(string cmd, string arguments, out string standardOutput, out string standardError, string workingDirectory)
+        {
             Process commandProcess = new Process
             {
                 StartInfo =
@@ -35,6 +40,11 @@ namespace Svn2GitNet
                     Arguments = arguments
                 }
             };
+
+            if (!string.IsNullOrWhiteSpace(workingDirectory))
+            {
+                commandProcess.StartInfo.WorkingDirectory = workingDirectory;
+            }
 
             string tempOutput = string.Empty;
             commandProcess.OutputDataReceived += (s, e) =>

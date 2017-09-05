@@ -325,7 +325,9 @@ namespace Svn2GitNet.Tests
                 .Returns(0);
 
             string standardOutput = string.Empty;
-            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput));
+            string standardError = "Hello. Cannot setup tracking information!";
+            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError));
+
 
             MetaInfo metaInfo = new MetaInfo()
             {
@@ -350,8 +352,8 @@ namespace Svn2GitNet.Tests
             fixer.FixBranches();
 
             // Assert
-            mock.Verify(f => f.Run("git", "checkout \"dev\""), Times.Once());
-            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput), Times.Once());
+            mock.Verify(f => f.Run("git", "checkout -b \"dev\" \"remotes/svn/dev\""), Times.Once());
+            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError), Times.Once());
         }
 
         [Fact]
@@ -362,8 +364,9 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
-            string standardOutput = "Hello. Cannot setup tracking information!";
-            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput));
+            string standardOutput = string.Empty;
+            string standardError = "Hello. Cannot setup tracking information!";
+            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError));
 
             MetaInfo metaInfo = new MetaInfo()
             {
@@ -390,7 +393,47 @@ namespace Svn2GitNet.Tests
 
             // Assert
             mock.Verify(f => f.Run("git", "checkout -b \"dev\" \"remotes/svn/dev\""), Times.Once());
-            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput), Times.Once());
+            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError), Times.Once());
+        }
+
+        [Fact]
+        public void FixBranchesIsNotRebaseIsNotTrunkBranchTrackingNoWarningTest()
+        {
+            // Prepare
+            var mock = new Mock<ICommandRunner>();
+            mock.Setup(f => f.Run("git", It.IsAny<string>()))
+                .Returns(0);
+
+            string standardOutput = string.Empty;
+            string standardError = string.Empty;
+            mock.Setup(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError));
+
+            MetaInfo metaInfo = new MetaInfo()
+            {
+                LocalBranches = new List<string>()
+                {
+                    "nodev"
+                },
+                RemoteBranches = new List<string>()
+                {
+                    "svn/dev",
+                    "svn/branch2"
+                }
+            };
+
+            Options options = new Options()
+            {
+                Rebase = false
+            };
+
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+
+            // Act
+            fixer.FixBranches();
+
+            // Assert
+            mock.Verify(f => f.Run("git", "checkout \"dev\""), Times.Once());
+            mock.Verify(f => f.Run("git", "branch --track \"dev\" \"remotes/svn/dev\"", out standardOutput, out standardError), Times.Once());
         }
 
         #endregion

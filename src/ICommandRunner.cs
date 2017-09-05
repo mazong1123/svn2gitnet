@@ -10,6 +10,8 @@ namespace Svn2GitNet
 
         int Run(string cmd, string arguments, out string standardOutput, out string standardError);
 
+        int Run(string cmd, string arguments, out string standardOutput, out string standardError, string workingDirectory);
+
         int RunGitSvnInteractiveCommand(string arguments, string password);
     }
 }
