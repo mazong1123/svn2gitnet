@@ -326,7 +326,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --username=\"userName\" --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
+            string expectedArguments = $"svn init --prefix=svn/ --username=\"userName\" --no-metadata --no-minimize-url --trunk=\"/\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -354,7 +354,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-metadata --no-minimize-url --trunk=\"{_testSvnUrl}\"";
+            string expectedArguments = $"svn init --prefix=svn/ --no-metadata --no-minimize-url --trunk=\"/\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -382,7 +382,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"{_testSvnUrl}\"";
+            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"/\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 
@@ -410,7 +410,7 @@ namespace Svn2GitNet.Tests
                 RootIsTrunk = true
             };
 
-            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"{_testSvnUrl}\"";
+            string expectedArguments = $"svn init --prefix=svn/ --no-minimize-url --trunk=\"/\" {_testSvnUrl}";
 
             mock.Setup(f => f.Run("git", It.IsAny<string>())).Returns(0);
 

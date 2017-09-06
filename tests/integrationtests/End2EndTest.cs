@@ -13,6 +13,8 @@ namespace Svn2GitNet.Tests
     public class End2EndTest
     {
         private const string PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL = "https://svn.code.sf.net/p/svn2gitnetclassicstructure/code";
+        private const string PUBLIC_NON_STANDARD_LAYOUT_REPOSITORY_URL = "https://svn.code.sf.net/p/svn2gitnetnonstandard/code";
+        private const string PUBLIC_NON_STANDARD_LAYOUT_NO_BRANCH_NO_TAG_REPOSITORY_URL = "https://svn.code.sf.net/p/svn2gitnetnonstandardsole/code";
 
         [Fact]
         public void PrivateRepositoryEnd2EndTest()
@@ -50,7 +52,7 @@ namespace Svn2GitNet.Tests
         {
             string subWorkingFolder = "PublicRepoBranchTest";
             string expectedBranchInfo = "  dev  dev@1* master";
-            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", "PublicRepoBranchTest"));
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", subWorkingFolder));
 
             Assert.Equal(0, exitCode);
 
@@ -81,6 +83,71 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
             Assert.Equal(expectedTagInfo, actualTagInfo);
+        }
+
+        [Fact]
+        public void PublicNonstandardLayoutRepositoryEnd2EndSmokeTest()
+        {
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_NON_STANDARD_LAYOUT_REPOSITORY_URL} --rootistrunk -v", "PublicNonStandardRepoSmokeTest"));
+
+            Assert.Equal(0, exitCode);
+        }
+
+        [Fact]
+        public void PublicNonstandardLayoutRepositoryEnd2EndNoBranchNoTagTest()
+        {
+            string subWorkingFolder = "PublicNonStandardRepoNoBranchNoTagTest";
+            string expectedBranchInfo = "* master";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_NON_STANDARD_LAYOUT_NO_BRANCH_NO_TAG_REPOSITORY_URL} --rootistrunk -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+
+            ICommandRunner commandRunner = new CommandRunner();
+
+            string actualBranchInfo = string.Empty;
+            string dummyError = string.Empty;
+            commandRunner.Run("git", "branch", out actualBranchInfo, out dummyError, Path.Combine(GetIntegrationTestsTempFolderPath(), subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(expectedBranchInfo, actualBranchInfo);
+        }
+
+        [Fact]
+        public void PublicNonstandardLayoutRepositoryEnd2EndBranchTest()
+        {
+            string subWorkingFolder = "PublicNonStandardRepoBranchTest";
+            string expectedBranchInfo = "  1.0.0  1.0.0@1  1.0.0@3  br1  br1@17  br1@3* master";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_NON_STANDARD_LAYOUT_REPOSITORY_URL} --trunk main --branches dev --tags rel -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+
+            ICommandRunner commandRunner = new CommandRunner();
+
+            string actualBranchInfo = string.Empty;
+            string dummyError = string.Empty;
+            commandRunner.Run("git", "branch", out actualBranchInfo, out dummyError, Path.Combine(GetIntegrationTestsTempFolderPath(), subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(expectedBranchInfo, actualBranchInfo);
+        }
+
+        [Fact]
+        public void PublicNonstandardLayoutRepositoryEnd2EndTagTest()
+        {
+            string subWorkingFolder = "PublicNonStandardRepoTagTest";
+            string expectedBranchInfo = "1.0.01.0.0@3";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_NON_STANDARD_LAYOUT_REPOSITORY_URL} --trunk main --branches dev --tags rel -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+
+            ICommandRunner commandRunner = new CommandRunner();
+
+            string actualBranchInfo = string.Empty;
+            string dummyError = string.Empty;
+            commandRunner.Run("git", "tag", out actualBranchInfo, out dummyError, Path.Combine(GetIntegrationTestsTempFolderPath(), subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+            Assert.Equal(expectedBranchInfo, actualBranchInfo);
         }
 
         private ProcessStartInfo BuildSvn2GitNetProcessStartInfo(string arguments, string subWorkingFolder = "")
