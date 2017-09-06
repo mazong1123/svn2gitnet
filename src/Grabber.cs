@@ -57,7 +57,10 @@ namespace Svn2GitNet
             {
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
-                arguments.AppendFormat("--trunk=\"{0}\"", _svnUrl);
+                //
+                // Note: There's a bug of git svn init so that we cannot assign the svn url to --trunk.
+                // We assign "/" to --trunk to tell git svn init we're using root as trunk.
+                arguments.Append("--trunk=\"/\" ");
             }
             else
             {
@@ -96,9 +99,9 @@ namespace Svn2GitNet
                         arguments.AppendFormat("--branches=\"{0}\" ", b);
                     }
                 }
-
-                arguments.Append(_svnUrl);
             }
+
+            arguments.Append(_svnUrl);
 
             Log($"Running command: git {arguments.ToString()}");
             if (_commandRunner.RunGitSvnInteractiveCommand(arguments.ToString(), _options.Password) != 0)
