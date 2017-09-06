@@ -12,3 +12,17 @@ script:
  - chmod +x test.sh
  - ./build.sh
  - ./test.sh
+
+deploy:
+  provider: releases
+  api_key: $AUTH_TOKEN
+  file:
+   - "./src/bin/Release/netcoreapp2.0/ubuntu.16.04-x64/publish"
+   - "./src/bin/Release/netcoreapp2.0/centos.7-x64/publish"
+   - "./src/bin/Release/netcoreapp2.0/debian.8-x64/publish"
+   - "./src/bin/Release/netcoreapp2.0/fedora.24-x64/publish"
+   - "./src/bin/Release/netcoreapp2.0/rhel.7-x64/publish"
+   - "./src/bin/Release/netcoreapp2.0/osx.10.12-x64"
+  skip_cleanup: true
+  on:
+    tags: true
