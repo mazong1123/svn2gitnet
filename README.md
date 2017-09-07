@@ -97,41 +97,57 @@ create a git repo from a svn repo in the specified layout.
 1. The svn repo is in the standard layout of (trunk, branches, tags) at the
 root level of the repo.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo
+```sh
+svn2gitnet http://svn.example.com/path/to/repo
+```
 
 2. The svn repo is NOT in standard layout and has only a trunk and tags at the
 root level of the repo.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --trunk dev --tags rel --nobranches
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --trunk dev --tags rel --nobranches
+```
 
 3. The svn repo is NOT in standard layout and has only a trunk at the root
 level of the repo.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --trunk trunk --nobranches --notags
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --trunk trunk --nobranches --notags
+```
 
 4. The svn repo is NOT in standard layout and has no trunk, branches, or tags
 at the root level of the repo. Instead the root level of the repo is
 equivalent to the trunk and there are no tags or branches.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --rootistrunk
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --rootistrunk
+```
 
 5. The svn repo is in the standard layout but you want to exclude the massive
 doc directory and the backup files you once accidently added.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --exclude doc --exclude '.*~$'
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --exclude doc --exclude '.*~$'
+```
 
 6. The svn repo actually tracks several projects and you only want to migrate
 one of them.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo/nested_project --no-minimize-url
+```sh
+svn2gitnet http://svn.example.com/path/to/repo/nested_project --no-minimize-url
+```
 
 7. The svn repo is password protected.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --username <<user_with_perms>> --password <<password>>
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --username <<user_with_perms>> --password <<password>>
+```
 
 8. You need to migrate starting at a specific svn revision number.
 
-        $ svn2gitnet http://svn.example.com/path/to/repo --revision <<starting_revision_number>>
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --revision <<starting_revision_number>>
+```
 
 9. You need to migrate starting at a specific svn revision number, ending at a specific revision number.
 
@@ -163,5 +179,82 @@ as a mirroring tool for your SVN repositories.
 The command to call is:
 
 ```sh
-svn2git --rebase
+svn2gitnet --rebase
 ```
+
+# Authors
+
+To convert all your svn authors to git format, create a file somewhere on your
+system with the list of conversions to make, one per line, for example:
+
+    mazong1123 = Jingyu Ma <mazong1123@gmail.com>
+    foo = Foo Foo <foo@just-an-email-address.com>
+
+Then pass an `--author` option to svn2gitnet pointing to your file:
+
+```sh
+svn2gitnet http://svn.example.com/path/to/repo --authors ~/authors.txt
+```
+
+### Debugging
+
+If you're having problems with converting your repository and you're not sure why,
+try turning on verbose logging.  This will print out more information from the
+underlying git-svn process as well as other trace information.
+
+You can turn on verbose logging with the `-v` or `--verbose` flags, like so:
+
+```sh
+svn2gitnet http://svn.yoursite.com/path/to/repo --verbose
+```
+
+### Options Reference
+
+```sh
+PS C:\Users\mazong1123> svn2gitnet --help svn2gitnet 1.0.0-preview
+
+Copyright (C) 2017 Jingyu Ma
+
+  -v, --verbose        (Default: false) Be verbose in logging -- useful for debugging issues
+
+  -m, --metadata       (Default: false) Include metadata in git logs (git-svn-id)
+
+  --no-minimize-url    Accept URLs as-is without attempting to connect to a higher level directory
+
+  --rootistrunk        Use this if the root level of the repo is equivalent to the trunk and there are no tags or
+                       branches
+
+  --trunk              (Default: trunk) Subpath to trunk from repository URL (default: trunk)
+
+  --notrunk            Do not import anything from trunk
+
+  --branches           Subpath to branches from repository URL (default: branches); can be used multiple times
+
+  --nobranches         Do not try to import any branches
+
+  --tags               Subpath to tags from repository URL (default: tags); can be used multiple times
+
+  --notags             Do not try to import any tags
+
+  --exclude            Specify a Perl regular expression to filter paths when fetching; can be used multiple times
+
+  --revision           Start importing from SVN revision START_REV; optionally end at END_REV
+
+  --username           Username for transports that needs it (http(s), svn)
+
+  --password           Password for transports that need it (http(s), svn)
+
+  --rebase             Instead of cloning a new project, rebase an existing one against SVN
+
+  --rebasebranch       Rebase specified branch
+
+  --authors            Path to file containing svn-to-git authors mapping
+
+  --help               Display this help screen.
+
+  --version            Display version information.
+```
+
+### Contribution
+
+TBD
