@@ -211,8 +211,8 @@ svn2gitnet http://svn.yoursite.com/path/to/repo --verbose
 ### Options Reference
 
 ```sh
-PS C:\Users\mazong1123> svn2gitnet --help svn2gitnet 1.0.0-preview
-
+PS C:\Users\mazong1123> svn2gitnet --help
+svn2gitnet 1.0.0-preview 
 Copyright (C) 2017 Jingyu Ma
 
   -v, --verbose        (Default: false) Be verbose in logging -- useful for debugging issues
