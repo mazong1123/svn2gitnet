@@ -3,6 +3,10 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
     <RootNamespace>Svn2GitNet</RootNamespace>
+    <Version>1.0.0-preview</Version>
+    <Authors>Jingyu Ma</Authors>
+    <Company>Jingyu Ma</Company>
+    <Product>Svn2Git.NET</Product>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.1.1-beta" />
