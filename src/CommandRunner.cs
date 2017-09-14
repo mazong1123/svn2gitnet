@@ -123,7 +123,16 @@ namespace Svn2GitNet
                     {
                         if (string.IsNullOrEmpty(password))
                         {
-                            password = Console.ReadLine();
+                            while (true)
+                            {
+                                var key = System.Console.ReadKey(true);
+                                if (key.Key == ConsoleKey.Enter)
+                                {
+                                    break;
+                                }
+
+                                password += key.KeyChar;
+                            }
                         }
 
                         commandProcess.StandardInput.WriteLine(password);
