@@ -11,8 +11,8 @@ namespace Svn2GitNet
     public class Migrator
     {
         // TODO: Add windows support.
-        private const string DEFAULT_AUTHOR_FILE = "~/.svn2git/authors";
-        private readonly string GIT_SVN_CACHE_DIRECTORY = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".subversion", "auth");
+        private readonly string _defaultAuthorsFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".svn2gitnet", "authors");
+        private readonly string _gitSvnCacheDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".subversion", "auth");
 
         private ICommandRunner _commandRunner;
         private IMessageDisplayer _messageDisplayer;
@@ -157,9 +157,9 @@ namespace Svn2GitNet
 
         private string GetDefaultAuthorsOption()
         {
-            if (File.Exists(DEFAULT_AUTHOR_FILE))
+            if (File.Exists(_defaultAuthorsFile))
             {
-                return DEFAULT_AUTHOR_FILE;
+                return _defaultAuthorsFile;
             }
 
             return string.Empty;
@@ -169,7 +169,7 @@ namespace Svn2GitNet
         {
             try
             {
-                string svnSimpleFolder = Path.Combine(GIT_SVN_CACHE_DIRECTORY, "svn.simple");
+                string svnSimpleFolder = Path.Combine(_gitSvnCacheDirectory, "svn.simple");
                 if (!Directory.Exists(svnSimpleFolder))
                 {
                     return;
@@ -206,7 +206,7 @@ namespace Svn2GitNet
         {
             try
             {
-                string svnSimpleFolder = Path.Combine(GIT_SVN_CACHE_DIRECTORY, "svn.simple");
+                string svnSimpleFolder = Path.Combine(_gitSvnCacheDirectory, "svn.simple");
                 if (!Directory.Exists(svnSimpleFolder))
                 {
                     return;
