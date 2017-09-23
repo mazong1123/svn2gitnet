@@ -263,13 +263,25 @@ Bug report and feature request are always welcome. Please file an issue so that 
 ## Build and test the source code
 
 ### Prerequisite
-- .NET Core Runtime 2.0.0 Or newer. You can get the latest .NET Core Runtime from https://www.microsoft.com/net/core
+- .NET Core Runtime 2.0.0 or newer. You can get the latest .NET Core Runtime from https://www.microsoft.com/net/core
 
 - Make sure `git-svn` has been installed.
 
 ### Build
 
-Run `.\build.cmd` on Windows or `./build.sh` on *nix or Mac to build the source code.
+Run following command to build the source code:
+
+Windows:
+
+```sh
+.\build.cmd
+``` 
+
+*nix and Mac:
+
+```sh
+./build.sh
+```
 
 ### Run unit tests
 
