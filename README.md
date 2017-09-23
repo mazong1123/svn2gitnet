@@ -257,4 +257,38 @@ Copyright (C) 2017 Jingyu Ma
 
 ### Contribution
 
-TBD
+## Bug report & feature request
+Bug report and feature request are always welcome. Please file an issue so that we can have a traceable discussion.
+
+## Build and test the source code
+
+### Prerequisite
+- .NET Core Runtime 2.0.0 Or newer. You can get the latest .NET Core Runtime from https://www.microsoft.com/net/core
+
+- Make sure `git-svn` has been installed.
+
+### Build
+
+Run `.\build.cmd` on Windows or `./build.sh` on *nix or Mac to build the source code.
+
+### Run unit tests
+
+If you only want to run unit tests other than full test, go to `tests/unittests`, run `dotnet test`.
+
+### Run unit tests and integration tests
+
+The integration tests require accessing external test svn repository and save the temp results in local folder. So currently some test cases related to private repository cannot be ran locally.
+
+To run the unit tests and integrationg tests:
+
+Windows:
+
+```sh
+.\test.cmd
+```
+
+*nix and Mac:
+
+```sh
+./test.sh
+```
