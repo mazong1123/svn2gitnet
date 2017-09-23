@@ -5,7 +5,7 @@ xmlns:wix="http://schemas.microsoft.com/wix/2006/wi">
   <xsl:output method="xml" version="1.0" encoding="utf-8" indent="yes"/>
 
   <xsl:template match="wix:Product/@Version">
-    <xsl:attribute name="Version">1.0.0.0</xsl:attribute>
+    <xsl:attribute name="Version">1.0.0.1</xsl:attribute>
   </xsl:template>
 
   <xsl:template match="wix:Product/@Manufacturer">
