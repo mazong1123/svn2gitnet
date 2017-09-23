@@ -63,7 +63,7 @@ the svn repo.
 
 ### Windows
 
-- Option 1: Download `.msi` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Double click to install it. **Note: There's no "Next" or "Finish" button during the installation process. If it finished, just open a command line window, type `svn2gitnet --help` to verify the installation. I'll add wizard dialog during installation in the upcoming release.**
+- Option 1: Download `.msi` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Double click to install it. ** type `svn2gitnet --help` to verify the installation. **
 
 - Option: 2: Download `zip` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Extract the zip, and add the folder to `PATH` environment variable. Open command line window and type `svn2gitnet --help`.
 
