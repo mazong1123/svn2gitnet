@@ -63,7 +63,7 @@ the svn repo.
 
 ### Windows
 
-- Option 1: Download `.msi` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Double click to install it. **Note: There's no "Next" or "Finish" button during the installation process. If it finished, just open a command line window, type `svn2gitnet --help` to verify the installation. I'll add wizard dialog during installation in the upcoming release.**
+- Option 1: Download `.msi` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Double click to install it. ** Type `svn2gitnet --help` to verify the installation. **
 
 - Option: 2: Download `zip` file in the [release page](https://github.com/mazong1123/svn2gitnet/releases). Extract the zip, and add the folder to `PATH` environment variable. Open command line window and type `svn2gitnet --help`.
 
@@ -257,4 +257,50 @@ Copyright (C) 2017 Jingyu Ma
 
 ### Contribution
 
-TBD
+## Bug report & feature request
+Bug report and feature request are always welcome. Please file an issue so that we can have a traceable discussion.
+
+## Build and test the source code
+
+### Prerequisite
+- .NET Core Runtime 2.0.0 or newer. You can get the latest .NET Core Runtime from https://www.microsoft.com/net/core
+
+- Make sure `git-svn` has been installed.
+
+### Build
+
+Run following command to build the source code:
+
+Windows:
+
+```sh
+.\build.cmd
+``` 
+
+*nix and Mac:
+
+```sh
+./build.sh
+```
+
+### Run unit tests
+
+If you only want to run unit tests other than full test, go to `tests/unittests`, run `dotnet test`.
+
+### Run unit tests and integration tests
+
+The integration tests require accessing external test svn repository and save the temp results in local folder. So currently some test cases related to private repository cannot be ran locally.
+
+To run the unit tests and integrationg tests:
+
+Windows:
+
+```sh
+.\test.cmd
+```
+
+*nix and Mac:
+
+```sh
+./test.sh
+```
