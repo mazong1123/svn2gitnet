@@ -19,12 +19,12 @@ deploy:
   provider: releases
   api_key: $AUTH_TOKEN
   file:
-   - "ubuntu.16.04-x64.tar.gz"
-   - "centos.7-x64.tar.gz"
-   - "debian.8-x64.tar.gz"
-   - "fedora.24-x64.tar.gz"
-   - "rhel.7-x64.tar.gz"
-   - "osx.10.12-x64.tar.gz"
+   - "svn2gitnet-ubuntu.16.04-x64.tar.gz"
+   - "svn2gitnet-centos.7-x64.tar.gz"
+   - "svn2gitnet-debian.8-x64.tar.gz"
+   - "svn2gitnet-fedora.24-x64.tar.gz"
+   - "svn2gitnet-rhel.7-x64.tar.gz"
+   - "svn2gitnet-osx.10.12-x64.tar.gz"
   skip_cleanup: true
   on:
     tags: true
