@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Xml.Serialization;
+using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Svn2GitNet.Tests
@@ -56,7 +57,7 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
 
-            ICommandRunner commandRunner = new CommandRunner();
+            ICommandRunner commandRunner = TestHelper.CreateCommandRunner();
 
             string actualBranchInfo = string.Empty;
             string dummyError = string.Empty;
@@ -75,7 +76,7 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
 
-            ICommandRunner commandRunner = new CommandRunner();
+            ICommandRunner commandRunner = TestHelper.CreateCommandRunner();
 
             string actualTagInfo = string.Empty;
             string dummyError = string.Empty;
@@ -102,7 +103,7 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
 
-            ICommandRunner commandRunner = new CommandRunner();
+            ICommandRunner commandRunner = TestHelper.CreateCommandRunner();
 
             string actualBranchInfo = string.Empty;
             string dummyError = string.Empty;
@@ -121,7 +122,7 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
 
-            ICommandRunner commandRunner = new CommandRunner();
+            ICommandRunner commandRunner = TestHelper.CreateCommandRunner();
 
             string actualBranchInfo = string.Empty;
             string dummyError = string.Empty;
@@ -140,7 +141,7 @@ namespace Svn2GitNet.Tests
 
             Assert.Equal(0, exitCode);
 
-            ICommandRunner commandRunner = new CommandRunner();
+            ICommandRunner commandRunner = TestHelper.CreateCommandRunner();
 
             string actualBranchInfo = string.Empty;
             string dummyError = string.Empty;

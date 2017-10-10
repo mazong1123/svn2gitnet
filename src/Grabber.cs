@@ -6,10 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Svn2GitNet
 {
-    public class Grabber : Worker, IGrabber
+    public class Grabber : InteractiveWorker, IGrabber
     {
         private string _svnUrl = string.Empty;
         private MetaInfo _metaInfo = null;
@@ -18,8 +19,9 @@ namespace Svn2GitNet
                        Options options,
                        ICommandRunner commandRunner,
                        string gitConfigCommandArguments,
-                       IMessageDisplayer messageDisplayer)
-        : base(options, commandRunner, gitConfigCommandArguments, messageDisplayer)
+                       IMessageDisplayer messageDisplayer,
+                       ILogger logger)
+        : base(options, commandRunner, gitConfigCommandArguments, messageDisplayer, logger)
         {
             _svnUrl = svnUrl;
             _metaInfo = new MetaInfo()
@@ -35,25 +37,25 @@ namespace Svn2GitNet
             Log("Start cloning...");
             StringBuilder arguments = new StringBuilder("svn init --prefix=svn/ ");
 
-            if (!string.IsNullOrWhiteSpace(_options.UserName))
+            if (!string.IsNullOrWhiteSpace(Options.UserName))
             {
-                arguments.AppendFormat("--username=\"{0}\" ", _options.UserName);
+                arguments.AppendFormat("--username=\"{0}\" ", Options.UserName);
             }
 
-            if (!_options.IncludeMetaData)
+            if (!Options.IncludeMetaData)
             {
                 arguments.Append("--no-metadata ");
             }
 
-            if (_options.NoMinimizeUrl)
+            if (Options.NoMinimizeUrl)
             {
                 arguments.Append("--no-minimize-url ");
             }
 
-            var branches = _options.Branches == null ? new List<string>() : new List<string>(_options.Branches);
-            var tags = _options.Tags == null ? new List<string>() : new List<string>(_options.Tags);
+            var branches = Options.Branches == null ? new List<string>() : new List<string>(Options.Branches);
+            var tags = Options.Tags == null ? new List<string>() : new List<string>(Options.Tags);
 
-            if (_options.RootIsTrunk)
+            if (Options.RootIsTrunk)
             {
                 // Non-standard repository layout.
                 // The repository root is effectively trunk.
@@ -65,12 +67,12 @@ namespace Svn2GitNet
             else
             {
                 // Add each component to the command that was passed as an argument.
-                if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
+                if (!string.IsNullOrWhiteSpace(Options.SubpathToTrunk))
                 {
-                    arguments.AppendFormat("--trunk=\"{0}\" ", _options.SubpathToTrunk);
+                    arguments.AppendFormat("--trunk=\"{0}\" ", Options.SubpathToTrunk);
                 }
 
-                if (!_options.NoTags)
+                if (!Options.NoTags)
                 {
                     if (tags.Count == 0)
                     {
@@ -85,7 +87,7 @@ namespace Svn2GitNet
                     }
                 }
 
-                if (!_options.NoBranches)
+                if (!Options.NoBranches)
                 {
                     if (branches.Count == 0)
                     {
@@ -103,43 +105,41 @@ namespace Svn2GitNet
 
             arguments.Append(_svnUrl);
 
-            Log($"Running command: git {arguments.ToString()}");
-            if (_commandRunner.RunGitSvnInteractiveCommand(arguments.ToString(), _options.Password) != 0)
+            if (CommandRunner.RunGitSvnInteractiveCommand(arguments.ToString(), Options.Password) != 0)
             {
                 string exceptionMessage = string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, $"git {arguments.ToString()}");
                 throw new MigrateException(exceptionMessage);
             }
 
-            if (!string.IsNullOrWhiteSpace(_options.Authors))
+            if (!string.IsNullOrWhiteSpace(Options.Authors))
             {
                 string args = string.Format("{0} svn.authorsfile {1}",
-                            _gitConfigCommandArguments, _options.Authors);
-                Log($"Running command: git {args}");
-                _commandRunner.Run("git", args);
+                            GitConfigCommandArguments, Options.Authors);
+                CommandRunner.Run("git", args);
             }
 
             arguments = new StringBuilder("svn fetch ");
-            if (!string.IsNullOrWhiteSpace(_options.Revision))
+            if (!string.IsNullOrWhiteSpace(Options.Revision))
             {
-                var range = _options.Revision.Split(":");
+                var range = Options.Revision.Split(":");
                 string start = range[0];
                 string end = range.Length < 2 || string.IsNullOrWhiteSpace(range[1]) ? "HEAD" : range[1];
                 arguments.AppendFormat("-r {0}:{1} ", start, end);
             }
 
-            if (_options.Exclude != null && _options.Exclude.Any())
+            if (Options.Exclude != null && Options.Exclude.Any())
             {
                 // Add exclude paths to the command line. Some versions of git support
                 // this for fetch only, later also for init.
                 List<string> regex = new List<string>();
-                if (!_options.RootIsTrunk)
+                if (!Options.RootIsTrunk)
                 {
-                    if (!string.IsNullOrWhiteSpace(_options.SubpathToTrunk))
+                    if (!string.IsNullOrWhiteSpace(Options.SubpathToTrunk))
                     {
-                        regex.Add(_options.SubpathToTrunk + @"[\/]");
+                        regex.Add(Options.SubpathToTrunk + @"[\/]");
                     }
 
-                    if (!_options.NoTags && tags.Count > 0)
+                    if (!Options.NoTags && tags.Count > 0)
                     {
                         foreach (var t in tags)
                         {
@@ -147,7 +147,7 @@ namespace Svn2GitNet
                         }
                     }
 
-                    if (!_options.NoBranches && branches.Count > 0)
+                    if (!Options.NoBranches && branches.Count > 0)
                     {
                         foreach (var b in branches)
                         {
@@ -156,12 +156,11 @@ namespace Svn2GitNet
                     }
                 }
 
-                string regexStr = "^(?:" + string.Join("|", regex) + ")(?:" + string.Join("|", _options.Exclude) + ")";
+                string regexStr = "^(?:" + string.Join("|", regex) + ")(?:" + string.Join("|", Options.Exclude) + ")";
                 arguments.AppendFormat("--ignore-paths=\"{0}\" ", regexStr);
             }
 
-            Log($"Running command: git {arguments.ToString()}");
-            if (_commandRunner.Run("git", arguments.ToString().Trim()) != 0)
+            if (CommandRunner.Run("git", arguments.ToString().Trim()) != 0)
             {
                 throw new MigrateException($"Fail to execute command \"git {arguments.ToString()}\". Run with -v or --verbose for details.");
             }
@@ -181,7 +180,7 @@ namespace Svn2GitNet
             // Tags are remote branches that start with "tags/".
             Log("Start retrieving tags...");
             _metaInfo.Tags = _metaInfo.RemoteBranches.ToList().FindAll(r => Regex.IsMatch(r.Trim(), @"^svn\/tags\/"));
-            if (_options.IsVerbose)
+            if (Options.IsVerbose)
             {
                 Log($"We have {_metaInfo.Tags.Count()} tags:");
                 foreach (var t in _metaInfo.Tags)
@@ -196,12 +195,12 @@ namespace Svn2GitNet
         {
             FetchBranches();
 
-            _metaInfo.LocalBranches = _metaInfo.LocalBranches.ToList().FindAll(l => l == _options.RebaseBranch);
-            _metaInfo.RemoteBranches = _metaInfo.RemoteBranches.ToList().FindAll(r => r == _options.RebaseBranch);
+            _metaInfo.LocalBranches = _metaInfo.LocalBranches.ToList().FindAll(l => l == Options.RebaseBranch);
+            _metaInfo.RemoteBranches = _metaInfo.RemoteBranches.ToList().FindAll(r => r == Options.RebaseBranch);
 
             if (!_metaInfo.LocalBranches.Any())
             {
-                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_LOCAL_BRANCH_FOUND, _options.RebaseBranch));
+                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_LOCAL_BRANCH_FOUND, Options.RebaseBranch));
             }
 
             if (_metaInfo.LocalBranches.Count() > 1)
@@ -217,7 +216,7 @@ namespace Svn2GitNet
 
             if (!_metaInfo.RemoteBranches.Any())
             {
-                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_REMOTE_BRANCH_FOUND, _options.RebaseBranch));
+                throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.NO_REMOTE_BRANCH_FOUND, Options.RebaseBranch));
             }
 
             string foundLocalBranch = _metaInfo.LocalBranches.First();
@@ -242,7 +241,6 @@ namespace Svn2GitNet
             string parameter = isLocal ? "l" : "r";
 
             string args = $"branch -{parameter} --no-color";
-            Log($"Running command: git {args}");
             string branchInfo = RunCommandIgnoreExitCode("git", args);
 
             IEnumerable<string> branches = new List<string>();
@@ -263,7 +261,7 @@ namespace Svn2GitNet
                        .Split(splitter, StringSplitOptions.RemoveEmptyEntries)
                        .Select(x => x.Replace("*", "").Trim());
 
-            if (_options.IsVerbose)
+            if (Options.IsVerbose)
             {
                 Log($"Fechted {branches.Count()} branches ({parameter}):");
                 foreach (var b in branches)
