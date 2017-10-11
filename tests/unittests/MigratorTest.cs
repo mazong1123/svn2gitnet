@@ -16,9 +16,11 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             string[] args = new string[] { };
-            Migrator migrator = new Migrator(new Options(), args, TestHelper.CreateCommandRunner(), new ConsoleMessageDisplayer(), null);
-
-            //MigrateResult expected = MigrateResult.MissingSvnUrlParameter;
+            Migrator migrator = new Migrator(new Options(), 
+                                            args, 
+                                            TestHelper.CreateCommandRunner(), 
+                                            new ConsoleMessageDisplayer(), 
+                                            TestHelper.CreateLoggerFactory());
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -40,7 +42,7 @@ namespace Svn2GitNet.Tests
             args,
             TestHelper.CreateCommandRunner(),
             new ConsoleMessageDisplayer(),
-            null);
+            TestHelper.CreateLoggerFactory());
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -62,7 +64,7 @@ namespace Svn2GitNet.Tests
             args,
             TestHelper.CreateCommandRunner(),
             new ConsoleMessageDisplayer(),
-            null);
+            TestHelper.CreateLoggerFactory());
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -85,7 +87,7 @@ namespace Svn2GitNet.Tests
             args,
             TestHelper.CreateCommandRunner(),
             new ConsoleMessageDisplayer(),
-            null);
+            TestHelper.CreateLoggerFactory());
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -103,7 +105,7 @@ namespace Svn2GitNet.Tests
             args,
             TestHelper.CreateCommandRunner(),
             new ConsoleMessageDisplayer(),
-            null);
+            TestHelper.CreateLoggerFactory());
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
