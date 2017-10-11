@@ -3,10 +3,11 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace Svn2GitNet
 {
-    public class Fixer : Worker, IFixer
+    public class Fixer : InteractiveWorker, IFixer
     {
         private MetaInfo _metaInfo;
 
@@ -14,8 +15,9 @@ namespace Svn2GitNet
                      Options options,
                      ICommandRunner commandRunner,
                      string gitConfigCommandArguments,
-                     IMessageDisplayer messageDisplayer)
-        : base(options, commandRunner, gitConfigCommandArguments, messageDisplayer)
+                     IMessageDisplayer messageDisplayer,
+                     ILogger logger)
+        : base(options, commandRunner, gitConfigCommandArguments, messageDisplayer, logger)
         {
             _metaInfo = metaInfo;
         }
@@ -38,7 +40,7 @@ namespace Svn2GitNet
                 svnBranches.RemoveAll(b => !Regex.IsMatch(b.Trim(), @"^svn\/"));
             }
 
-            if (_options.IsVerbose)
+            if (Options.IsVerbose)
             {
                 Log("To fix branches include:");
                 foreach (var b in svnBranches)
@@ -47,12 +49,11 @@ namespace Svn2GitNet
                 }
             }
 
-            if (_options.Rebase)
+            if (Options.Rebase)
             {
                 Log("Rebasing...");
                 CommandInfo cmdInfo = CommandInfoBuilder.BuildGitSvnFetchCommandInfo();
 
-                Log($"Running command {cmdInfo.Command} {cmdInfo.Arguments}");
                 int exitCode = RunCommand(cmdInfo);
                 if (exitCode != 0)
                 {
@@ -71,16 +72,14 @@ namespace Svn2GitNet
                 var branch = Regex.Replace(b, @"^svn\/", "").Trim();
                 bool isTrunkBranchOrIsLocalBranch = branch.Equals("trunk", StringComparison.InvariantCulture)
                                                     || localBranchSet.Contains(b);
-                if (_options.Rebase && isTrunkBranchOrIsLocalBranch)
+                if (Options.Rebase && isTrunkBranchOrIsLocalBranch)
                 {
                     string localBranch = branch == "trunk" ? "master" : branch;
                     CommandInfo forceCheckoutLocalBranchCommandInfo = CommandInfoBuilder.BuildForceCheckoutLocalBranchCommandInfo(localBranch);
                     CommandInfo rebaseRemoteBranchCommandInfo = CommandInfoBuilder.BuildGitRebaseRemoteSvnBranchCommandInfo(branch);
 
-                    Log($"Running command: {forceCheckoutLocalBranchCommandInfo.Command} {forceCheckoutLocalBranchCommandInfo.Arguments}");
                     RunCommand(CommandInfoBuilder.BuildForceCheckoutLocalBranchCommandInfo(localBranch));
 
-                    Log($"Running command: {rebaseRemoteBranchCommandInfo.Command} {rebaseRemoteBranchCommandInfo.Arguments}");
                     RunCommand(CommandInfoBuilder.BuildGitRebaseRemoteSvnBranchCommandInfo(branch));
 
                     continue;
@@ -95,14 +94,12 @@ namespace Svn2GitNet
                 if (cannotSetupTrackingInformation)
                 {
                     CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
-                    _commandRunner.Run(ci.Command, ci.Arguments);
+                    CommandRunner.Run(ci.Command, ci.Arguments);
                 }
                 else
                 {
                     CommandInfo trackCommandInfo = CommandInfoBuilder.BuildGitBranchTrackCommandInfo(branch);
 
-                    Log($"Running command: {trackCommandInfo.Command} {trackCommandInfo.Arguments}");
-                    //string status = RunCommandIgnoreExitCode(trackCommandInfo);
                     string trackCommandError = string.Empty;
                     string dummyOutput = string.Empty;
                     RunCommand(trackCommandInfo, out dummyOutput, out trackCommandError);
@@ -122,7 +119,6 @@ namespace Svn2GitNet
 
                         CommandInfo checkoutRemoteBranchCommandInfo = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
 
-                        Log($"Running command: {checkoutRemoteBranchCommandInfo.Command} {checkoutRemoteBranchCommandInfo.Arguments}");
                         RunCommand(checkoutRemoteBranchCommandInfo);
                     }
                     else
@@ -136,7 +132,6 @@ namespace Svn2GitNet
 
                         CommandInfo checkoutLocalBranchCommandInfo = CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch);
 
-                        Log($"Running command: {checkoutLocalBranchCommandInfo.Command} {checkoutLocalBranchCommandInfo.Arguments}");
                         RunCommand(checkoutLocalBranchCommandInfo);
                     }
                 }
@@ -155,11 +150,8 @@ namespace Svn2GitNet
                 {
                     Log("Reading user.name and user.email...");
 
-                    Log($"Running command: git {_gitConfigCommandArguments} --get user.name");
-                    _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.name", out currentUserName);
-
-                    Log($"Running command: git {_gitConfigCommandArguments} --get user.email");
-                    _commandRunner.Run("git", $"{_gitConfigCommandArguments} --get user.email", out currentUserEmail);
+                    CommandRunner.Run("git", $"{GitConfigCommandArguments} --get user.name", out currentUserName);
+                    CommandRunner.Run("git", $"{GitConfigCommandArguments} --get user.email", out currentUserEmail);
 
                     Log($"user.name: {currentUserName}");
                     Log($"user.email: {currentUserEmail}");
@@ -181,15 +173,15 @@ namespace Svn2GitNet
                         string email = Utils.RemoveFromTwoEnds(RunCommandIgnoreExitCode("git", $"log -1 --pretty=format:'%ae' \"{quotesFreeTag}\""), '\'');
 
                         string quotesFreeAuthor = Utils.EscapeQuotes(author);
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} user.name \"{quotesFreeAuthor}\"");
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} user.email \"{quotesFreeAuthor}\"");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{quotesFreeAuthor}\"");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{quotesFreeAuthor}\"");
 
                         string originalGitCommitterDate = Environment.GetEnvironmentVariable("GIT_COMMITTER_DATE");
                         Environment.SetEnvironmentVariable("GIT_COMMITTER_DATE", Utils.EscapeQuotes(date));
-                        _commandRunner.Run("git", $"tag -a -m \"{Utils.EscapeQuotes(subject)}\" \"{Utils.EscapeQuotes(id)}\" \"{quotesFreeTag}\"");
+                        CommandRunner.Run("git", $"tag -a -m \"{Utils.EscapeQuotes(subject)}\" \"{Utils.EscapeQuotes(id)}\" \"{quotesFreeTag}\"");
                         Environment.SetEnvironmentVariable("GIT_COMMITTER_DATE", originalGitCommitterDate);
 
-                        _commandRunner.Run("git", $"branch -d -r \"{quotesFreeTag}\"");
+                        CommandRunner.Run("git", $"branch -d -r \"{quotesFreeTag}\"");
                     }
                 }
             }
@@ -203,20 +195,20 @@ namespace Svn2GitNet
                     // Otherwise unset the value because originally there was none.
                     if (!string.IsNullOrWhiteSpace(currentUserName))
                     {
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} user.name \"{currentUserName.Trim()}\"");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} user.name \"{currentUserName.Trim()}\"");
                     }
                     else
                     {
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} --unset user.name");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} --unset user.name");
                     }
 
                     if (!string.IsNullOrWhiteSpace(currentUserEmail))
                     {
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} user.email \"{currentUserEmail.Trim()}\"");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} user.email \"{currentUserEmail.Trim()}\"");
                     }
                     else
                     {
-                        _commandRunner.Run("git", $"{_gitConfigCommandArguments} --unset user.email");
+                        CommandRunner.Run("git", $"{GitConfigCommandArguments} --unset user.email");
                     }
                 }
             }
@@ -227,22 +219,22 @@ namespace Svn2GitNet
             if (_metaInfo.RemoteBranches != null)
             {
                 string trunkBranch = _metaInfo.RemoteBranches.ToList().Find(b => b.Trim().Equals("trunk"));
-                if (trunkBranch != null && !_options.Rebase)
+                if (trunkBranch != null && !Options.Rebase)
                 {
-                    _commandRunner.Run("git", "checkout svn/trunk");
-                    _commandRunner.Run("git", "branch -D master");
-                    _commandRunner.Run("git", "checkout -f -b master");
+                    CommandRunner.Run("git", "checkout svn/trunk");
+                    CommandRunner.Run("git", "branch -D master");
+                    CommandRunner.Run("git", "checkout -f -b master");
 
                     return;
                 }
             }
 
-            _commandRunner.Run("git", "checkout -f master");
+            CommandRunner.Run("git", "checkout -f master");
         }
 
         public void OptimizeRepos()
         {
-            _commandRunner.Run("git", "gc");
+            CommandRunner.Run("git", "gc");
         }
 
         private void ShowTrackingRemoteSvnBranchesDeprecatedWarning()

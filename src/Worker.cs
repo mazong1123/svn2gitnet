@@ -1,23 +1,76 @@
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace Svn2GitNet
 {
     public class Worker
     {
-        protected Options _options;
-        protected ICommandRunner _commandRunner;
-        protected string _gitConfigCommandArguments;
-        protected IMessageDisplayer _messageDisplayer;
+        private Options _options;
+        private ICommandRunner _commandRunner;
+        private IMessageDisplayer _messageDisplayer;
+        private ILogger _logger;
 
         public Worker(Options options,
                       ICommandRunner commandRunner,
-                      string gitConfigCommandArguments,
-                      IMessageDisplayer messageDisplayer)
+                      IMessageDisplayer messageDisplayer,
+                      ILogger logger)
         {
             _options = options;
             _commandRunner = commandRunner;
-            _gitConfigCommandArguments = gitConfigCommandArguments;
             _messageDisplayer = messageDisplayer;
+            _logger = logger;
+        }
+
+        protected Options Options
+        {
+            get
+            {
+                return _options;
+            }
+
+            set
+            {
+                _options = value;
+            }
+        }
+
+        protected ICommandRunner CommandRunner
+        {
+            get
+            {
+                return _commandRunner;
+            }
+
+            set
+            {
+                _commandRunner = value;
+            }
+        }
+
+        protected IMessageDisplayer MessageDisplayer
+        {
+            get
+            {
+                return _messageDisplayer;
+            }
+
+            set
+            {
+                _messageDisplayer = value;
+            }
+        }
+
+        protected ILogger Logger
+        {
+            get
+            {
+                return _logger;
+            }
+
+            set
+            {
+                _logger = value;
+            }
         }
 
         protected void ShowMessageIfPossible(string message)
@@ -30,9 +83,9 @@ namespace Svn2GitNet
 
         protected void Log(string message)
         {
-            if (_options.IsVerbose)
+            if (_logger != null && _options.IsVerbose)
             {
-                Console.WriteLine(message);
+                _logger.LogTrace(message);
             }
         }
 

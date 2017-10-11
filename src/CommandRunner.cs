@@ -1,11 +1,21 @@
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace Svn2GitNet
 {
     public class CommandRunner : ICommandRunner
     {
+        private ILogger _logger;
+        private bool _isVerbose;
+
+        public CommandRunner(ILogger logger, bool isVerbose)
+        {
+            _logger = logger;
+            _isVerbose = isVerbose;
+        }
+
         public int Run(string cmd, string arguments)
         {
             string standardOutput;
@@ -28,6 +38,7 @@ namespace Svn2GitNet
 
         public int Run(string cmd, string arguments, out string standardOutput, out string standardError, string workingDirectory)
         {
+            Log($"Running command: {cmd} {arguments.ToString()}");
             Process commandProcess = new Process
             {
                 StartInfo =
@@ -200,6 +211,14 @@ namespace Svn2GitNet
             }
 
             return messageType;
+        }
+
+        private void Log(string message)
+        {
+            if (_logger != null && _isVerbose)
+            {
+                _logger.LogTrace(message);
+            }
         }
     }
 }

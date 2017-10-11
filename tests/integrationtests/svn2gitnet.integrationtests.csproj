@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\svn2gitnet.csproj" />
+    <ProjectReference Include="..\testhelper\testhelper.csproj" />
   </ItemGroup>
 
 </Project>
