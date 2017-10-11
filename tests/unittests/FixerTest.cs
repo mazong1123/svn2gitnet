@@ -26,7 +26,7 @@ namespace Svn2GitNet.Tests
 
             MetaInfo metaInfo = new MetaInfo();
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null, null);
 
             // Act
             fixer.FixTrunk();
@@ -51,7 +51,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null, null);
 
             // Act
             fixer.FixTrunk();
@@ -81,7 +81,7 @@ namespace Svn2GitNet.Tests
                 Rebase = true
             };
 
-            IFixer fixer = new Fixer(metaInfo, option, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, option, mock.Object, "", null, null);
 
             // Act
             fixer.FixTrunk();
@@ -111,7 +111,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, option, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, option, mock.Object, "", null, null);
 
             // Act
             fixer.FixTrunk();
@@ -135,7 +135,7 @@ namespace Svn2GitNet.Tests
             mock.Setup(f => f.Run("git", It.IsAny<string>()))
                 .Returns(0);
 
-            IFixer fixer = new Fixer(new MetaInfo(), new Options(), mock.Object, "", null);
+            IFixer fixer = new Fixer(new MetaInfo(), new Options(), mock.Object, "", null, null);
 
             // Act
             fixer.OptimizeRepos();
@@ -161,7 +161,7 @@ namespace Svn2GitNet.Tests
                 Rebase = true
             };
 
-            IFixer fixer = new Fixer(new MetaInfo(), options, mock.Object, "", null);
+            IFixer fixer = new Fixer(new MetaInfo(), options, mock.Object, "", null, null);
 
             // Act
             Exception ex = Record.Exception(() => fixer.FixBranches());
@@ -198,7 +198,7 @@ namespace Svn2GitNet.Tests
                 Rebase = true
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -235,7 +235,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -272,7 +272,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -307,7 +307,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -346,7 +346,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -386,7 +386,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -426,7 +426,7 @@ namespace Svn2GitNet.Tests
                 Rebase = false
             };
 
-            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, options, mock.Object, "", null, null);
 
             // Act
             fixer.FixBranches();
@@ -450,7 +450,7 @@ namespace Svn2GitNet.Tests
                 Tags = null
             };
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null, null);
 
             // Act
             fixer.FixTags();
@@ -491,7 +491,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "", null, null);
 
             // Act
             fixer.FixTags();
@@ -541,7 +541,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null, null);
 
             // Act
             fixer.FixTags();
@@ -591,7 +591,7 @@ namespace Svn2GitNet.Tests
                 }
             };
 
-            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null);
+            IFixer fixer = new Fixer(metaInfo, new Options(), mock.Object, "config", null, null);
 
             // Act
             fixer.FixTags();

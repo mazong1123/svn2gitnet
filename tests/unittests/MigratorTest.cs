@@ -16,7 +16,7 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             string[] args = new string[] { };
-            Migrator migrator = new Migrator(new Options(), args);
+            Migrator migrator = new Migrator(new Options(), args, TestHelper.CreateCommandRunner(), new ConsoleMessageDisplayer(), null);
 
             //MigrateResult expected = MigrateResult.MissingSvnUrlParameter;
 
@@ -36,7 +36,11 @@ namespace Svn2GitNet.Tests
             Migrator migrator = new Migrator(new Options()
             {
                 Rebase = true
-            }, args);
+            },
+            args,
+            TestHelper.CreateCommandRunner(),
+            new ConsoleMessageDisplayer(),
+            null);
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -54,7 +58,11 @@ namespace Svn2GitNet.Tests
             Migrator migrator = new Migrator(new Options()
             {
                 RebaseBranch = "normalarg"
-            }, args);
+            },
+            args,
+            TestHelper.CreateCommandRunner(),
+            new ConsoleMessageDisplayer(),
+            null);
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -73,7 +81,11 @@ namespace Svn2GitNet.Tests
             {
                 UserName = "userName",
                 Password = "123123"
-            }, args);
+            },
+            args,
+            TestHelper.CreateCommandRunner(),
+            new ConsoleMessageDisplayer(),
+            null);
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
@@ -87,7 +99,11 @@ namespace Svn2GitNet.Tests
         {
             // Prepare
             string[] args = new string[] { "http://testsvnurl" };
-            Migrator migrator = new Migrator(new Options(), args);
+            Migrator migrator = new Migrator(new Options(),
+            args,
+            TestHelper.CreateCommandRunner(),
+            new ConsoleMessageDisplayer(),
+            null);
 
             // Act
             Exception ex = Record.Exception(() => migrator.Initialize());
