@@ -11,7 +11,6 @@ namespace Svn2GitNet
 {
     public class Migrator : Worker
     {
-        // TODO: Add windows support.
         private readonly string _defaultAuthorsFile = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".svn2gitnet", "authors");
         private readonly string _gitSvnCacheDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".subversion", "auth");
 
