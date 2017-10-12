@@ -31,28 +31,6 @@ namespace Svn2GitNet.Tests
         }
 
         [Fact]
-        public void RebaseWithExtraArgumentsInitializeTest()
-        {
-            // Prepare
-            string[] args = new string[] { "--rebase", "extraarg" };
-            Migrator migrator = new Migrator(new Options()
-            {
-                Rebase = true
-            },
-            args,
-            TestHelper.CreateCommandRunner(),
-            new ConsoleMessageDisplayer(),
-            TestHelper.CreateLoggerFactory());
-
-            // Act
-            Exception ex = Record.Exception(() => migrator.Initialize());
-
-            // Assert
-            Assert.IsType<MigrateException>(ex);
-            Assert.Equal(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS, ex.Message);
-        }
-
-        [Fact]
         public void RebaseBranchWithExtraArgumentsInitializeTest()
         {
             // Prepare

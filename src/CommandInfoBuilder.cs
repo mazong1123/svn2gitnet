@@ -60,12 +60,12 @@ namespace Svn2GitNet
         /// Build command "git svn fetch"
         /// </summary>
         /// <returns>Built command info.</returns>
-        public static CommandInfo BuildGitSvnFetchCommandInfo()
+        public static CommandInfo BuildGitSvnFetchCommandInfo(string userName)
         {
             return new CommandInfo()
             {
                 Command = "git",
-                Arguments = "svn fetch"
+                Arguments = string.IsNullOrWhiteSpace(userName) ? "svn fetch" : $"svn fetch --username {userName}"
             };
         }
 
