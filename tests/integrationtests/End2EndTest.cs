@@ -151,6 +151,19 @@ namespace Svn2GitNet.Tests
             Assert.Equal(expectedBranchInfo, actualBranchInfo);
         }
 
+        [Fact]
+        public void PublicClassicLayoutRepositoryEnd2EndRebaseTest()
+        {
+            string subWorkingFolder = "PublicRepoRebaseTest";
+            int exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo($"{PUBLIC_CLASSIC_LAYOUT_REPOSITORY_URL} -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+
+            exitCode = RunCommand(BuildSvn2GitNetProcessStartInfo("--rebase -v", subWorkingFolder));
+
+            Assert.Equal(0, exitCode);
+        }
+
         private ProcessStartInfo BuildSvn2GitNetProcessStartInfo(string arguments, string subWorkingFolder = "")
         {
             string platformSepcifier = GetPlatformSpecifier();
