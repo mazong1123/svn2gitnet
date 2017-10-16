@@ -253,8 +253,8 @@ namespace Svn2GitNet
             string splitter = "\n";
             if (!branchInfo.Contains(splitter))
             {
-                splitter = "  ";
-                Log("Branches are not splitted by new liner. Use '  ' as splitter.");
+                splitter = " ";
+                Log("Branches are not splitted by new liner. Use ' ' as splitter.");
             }
 
             branches = branchInfo

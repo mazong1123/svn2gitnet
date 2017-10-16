@@ -217,7 +217,7 @@ namespace Svn2GitNet
         {
             if (_logger != null && _isVerbose)
             {
-                _logger.LogTrace(message);
+                _logger.LogInformation(message);
             }
         }
     }
