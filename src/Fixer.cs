@@ -72,6 +72,18 @@ namespace Svn2GitNet
 
             // In case of large branches, we build a hash set to boost the query later.
             HashSet<string> localBranchSet = new HashSet<string>(_metaInfo.LocalBranches);
+            if (Options.IsVerbose)
+            {
+                StringBuilder sb = new StringBuilder("We have following local branches:");
+                sb.AppendLine();
+
+                foreach (var b in _metaInfo.LocalBranches)
+                {
+                    sb.AppendLine(b);
+                }
+
+                Log(sb.ToString());
+            }
 
             bool cannotSetupTrackingInformation = false;
             bool legacySvnBranchTrackingMessageDisplayed = false;
@@ -80,7 +92,11 @@ namespace Svn2GitNet
             {
                 var branch = Regex.Replace(b, @"^svn\/", "").Trim();
                 bool isTrunkBranchOrIsLocalBranch = branch.Equals("trunk", StringComparison.InvariantCulture)
-                                                    || localBranchSet.Contains(b);
+                                                    || localBranchSet.Contains(branch);
+
+                Log($"Current branch is {b}");
+                Log($"Current branch without prefix: {branch}");
+                Log($"IsTrunkBranchOrIsLocalBranch: {isTrunkBranchOrIsLocalBranch}");
                 if (Options.Rebase && isTrunkBranchOrIsLocalBranch)
                 {
                     string localBranch = branch == "trunk" ? "master" : branch;
