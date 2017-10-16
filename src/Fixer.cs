@@ -52,9 +52,18 @@ namespace Svn2GitNet
             if (Options.Rebase)
             {
                 Log("Rebasing...");
-                CommandInfo cmdInfo = CommandInfoBuilder.BuildGitSvnFetchCommandInfo();
+                CommandInfo cmdInfo = CommandInfoBuilder.BuildGitSvnFetchCommandInfo(Options.UserName);
 
-                int exitCode = RunCommand(cmdInfo);
+                int exitCode = 0;
+                if (string.IsNullOrWhiteSpace(Options.UserName))
+                {
+                    exitCode = RunCommand(cmdInfo);
+                }
+                else
+                {
+                    exitCode = CommandRunner.RunGitSvnInteractiveCommand(cmdInfo.Arguments, Options.Password);
+                }
+
                 if (exitCode != 0)
                 {
                     throw new MigrateException(string.Format(ExceptionHelper.ExceptionMessage.FAIL_TO_EXECUTE_COMMAND, cmdInfo.ToString()));

@@ -39,11 +39,6 @@ namespace Svn2GitNet
 
             if (Options.Rebase)
             {
-                if (_args.Length > 1)
-                {
-                    throw new MigrateException(ExceptionHelper.ExceptionMessage.TOO_MANY_ARGUMENTS);
-                }
-
                 VerifyWorkingTreeIsClean();
             }
             else if (!string.IsNullOrWhiteSpace(Options.RebaseBranch))
