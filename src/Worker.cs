@@ -85,7 +85,7 @@ namespace Svn2GitNet
         {
             if (_logger != null && _options.IsVerbose)
             {
-                _logger.LogTrace(message);
+                _logger.LogInformation(message);
             }
         }
 
