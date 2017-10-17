@@ -182,6 +182,12 @@ The command to call is:
 svn2gitnet --rebase
 ```
 
+Optionally you can also use an alternate username/password instead of the default:
+
+```sh
+svn2gitnet --rebase --username <<user>> --password <<password>>
+```
+
 # Authors
 
 To convert all your svn authors to git format, create a file somewhere on your
