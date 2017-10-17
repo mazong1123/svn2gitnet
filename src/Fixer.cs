@@ -85,9 +85,6 @@ namespace Svn2GitNet
                 Log(sb.ToString());
             }
 
-            bool cannotSetupTrackingInformation = false;
-            bool legacySvnBranchTrackingMessageDisplayed = false;
-
             foreach (var b in svnBranches)
             {
                 var branch = Regex.Replace(b, @"^svn\/", "").Trim();
@@ -116,50 +113,8 @@ namespace Svn2GitNet
                     continue;
                 }
 
-                if (cannotSetupTrackingInformation)
-                {
-                    CommandInfo ci = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
-                    CommandRunner.Run(ci.Command, ci.Arguments);
-                }
-                else
-                {
-                    CommandInfo trackCommandInfo = CommandInfoBuilder.BuildGitBranchTrackCommandInfo(branch);
-
-                    string trackCommandError = string.Empty;
-                    string dummyOutput = string.Empty;
-                    RunCommand(trackCommandInfo, out dummyOutput, out trackCommandError);
-
-                    // As of git 1.8.3.2, tracking information cannot be set up for remote SVN branches:
-                    // http://git.661346.n2.nabble.com/git-svn-Use-prefix-by-default-td7594288.html#a7597159
-                    //
-                    // Older versions of git can do it and it should be safe as long as remotes aren't pushed.
-                    // Our --rebase option obviates the need for read-only tracked remotes, however.  So, we'll
-                    // deprecate the old option, informing those relying on the old behavior that they should
-                    // use the newer --rebase option.
-                    Log($"trackCommandError: {trackCommandError}");
-                    if (Regex.IsMatch(trackCommandError, @"(?m)Cannot setup tracking information"))
-                    {
-                        Log("Has tracking error.");
-                        cannotSetupTrackingInformation = true;
-
-                        CommandInfo checkoutRemoteBranchCommandInfo = CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch);
-
-                        RunCommand(checkoutRemoteBranchCommandInfo);
-                    }
-                    else
-                    {
-                        if (!legacySvnBranchTrackingMessageDisplayed)
-                        {
-                            ShowTrackingRemoteSvnBranchesDeprecatedWarning();
-                        }
-
-                        legacySvnBranchTrackingMessageDisplayed = true;
-
-                        CommandInfo checkoutLocalBranchCommandInfo = CommandInfoBuilder.BuildCheckoutLocalBranchCommandInfo(branch);
-
-                        RunCommand(checkoutLocalBranchCommandInfo);
-                    }
-                }
+                // Now checkout the remote svn branch.
+                RunCommand(CommandInfoBuilder.BuildCheckoutSvnRemoteBranchCommandInfo(branch));
             }
 
             Log("End fixing branches.");
@@ -260,27 +215,6 @@ namespace Svn2GitNet
         public void OptimizeRepos()
         {
             CommandRunner.Run("git", "gc");
-        }
-
-        private void ShowTrackingRemoteSvnBranchesDeprecatedWarning()
-        {
-            StringBuilder message = new StringBuilder();
-            for (int i = 0; i < 68; ++i)
-            {
-                message.Append("*");
-            }
-            message.AppendLine();
-
-            message.AppendLine("svn2gitnet warning: Tracking remote SVN branches is deprecated.");
-            message.AppendLine("In a future release local branches will be created without tracking.");
-            message.AppendLine("If you must resync your branches, run: svn2gitnet --rebase");
-
-            for (int i = 0; i < 68; ++i)
-            {
-                message.Append("*");
-            }
-
-            ShowMessageIfPossible(message.ToString());
         }
     }
 }
