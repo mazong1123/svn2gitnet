@@ -310,3 +310,13 @@ Windows:
 ```sh
 ./test.sh
 ```
+
+# Support this project
+
+You can buy me a cup of coffee if `svn2git.net` helped you :).
+
+## Paypal
+mazong1123img@163.com
+
+## Bitcoin address
+16k7L5Y1fwwQsig32NbaUhm48NqYCPejh
