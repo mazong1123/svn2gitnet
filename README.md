@@ -196,7 +196,7 @@ system with the list of conversions to make, one per line, for example:
     mazong1123 = Jingyu Ma <mazong1123@gmail.com>
     foo = Foo Foo <foo@just-an-email-address.com>
 
-Then pass an `--author` option to svn2gitnet pointing to your file:
+Then pass an `--authors` option to svn2gitnet pointing to your file:
 
 ```sh
 svn2gitnet http://svn.example.com/path/to/repo --authors ~/authors.txt
