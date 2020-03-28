@@ -229,6 +229,8 @@ var packageUnixTask = Task( packageUnixTarget )
     {
         foreach( string platform in unixRunTimes )
         {
+            Information( $"Packing {platform}..." );
+
             DirectoryPath packageFolder = packageDir.Combine( platform );
             FilePath tarFile = packageFolder.CombineWithFilePath( $"svn2gitnet-{platform}.tar.gz" );
             EnsureDirectoryExists( packageFolder );
