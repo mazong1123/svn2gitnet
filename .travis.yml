@@ -8,23 +8,19 @@ language: csharp
 mono: none
 dotnet: 2.0.0
 script:
- - chmod +x build.sh
- - chmod +x test.sh
- - chmod +x package.sh
- - ./build.sh
- - ./test.sh
- - ./package.sh
+ - dotnet tool install -g Cake.Tool
+ - dotnet cake --target=all
 
 deploy:
   provider: releases
   api_key: $AUTH_TOKEN
   file:
-   - "svn2gitnet-ubuntu-x64.tar.gz"
-   - "svn2gitnet-centos-x64.tar.gz"
-   - "svn2gitnet-debian-x64.tar.gz"
-   - "svn2gitnet-fedora-x64.tar.gz"
-   - "svn2gitnet-rhel-x64.tar.gz"
-   - "svn2gitnet-osx-x64.tar.gz"
+   - "dist/ubuntu-x64/svn2gitnet-ubuntu-x64.tar.gz"
+   - "dist/centos-x64/svn2gitnet-centos-x64.tar.gz"
+   - "dist/debian-x64/svn2gitnet-debian-x64.tar.gz"
+   - "dist/fedora-x64/svn2gitnet-fedora-x64.tar.gz"
+   - "dist/rhel-x64/svn2gitnet-rhel-x64.tar.gz"
+   - "dist/osx-x64/svn2gitnet-osx-x64.tar.gz"
   skip_cleanup: true
   on:
     tags: true
