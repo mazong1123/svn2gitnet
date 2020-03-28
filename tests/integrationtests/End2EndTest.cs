@@ -169,7 +169,7 @@ namespace Svn2GitNet.Tests
             string platformSepcifier = GetPlatformSpecifier();
             string testTempFolderPath = GetIntegrationTestsTempFolderPath();
             string binaryName = GetBinaryName();
-            string binaryPath = Path.Combine(testTempFolderPath, "netcoreapp2.0", platformSepcifier, "publish", binaryName);
+            string binaryPath = Path.Combine(testTempFolderPath, "netcoreapp3.1", platformSepcifier, "publish", binaryName);
 
             string workingdirectory = string.IsNullOrEmpty(subWorkingFolder) ? testTempFolderPath : Path.Combine(testTempFolderPath, subWorkingFolder);
             if (!Directory.Exists(workingdirectory))
